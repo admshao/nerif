@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Hello World!</title>
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-    <!-- All of the Node.js APIs are available in this renderer process. -->
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
-  </body>
+<head>
+	<title>Nerif</title>
+	<meta charset="UTF-8">
 
-  <script>
-    // You can also require other files to run in this process
-    require('./renderer.js')
-  </script>
+	<script type="text/javascript" src="ext-6.2.0/build/ext-all.js"></script>
+
+	<script type="text/javascript" src="ext-6.2.0/build/classic/theme-triton/theme-triton.js"></script>
+	<link rel="stylesheet" type="text/css" href="ext-6.2.0/build/classic/theme-triton/resources/theme-triton-all.css">
+
+	<script type="text/javascript" src="app/view/Geral.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+	Ext.application({
+		extend: 'Ext.app.Application',
+		name: 'Nerif',
+		autoCreateViewport: 'Nerif.view.Main'
+	});
+</script>
+</body>
 </html>

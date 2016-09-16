@@ -10,13 +10,12 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({show:false, autoHideMenuBar:true, darkTheme:true})
+  mainWindow.setMenu(null);
+  mainWindow.maximize()
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/index.html`)
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -31,6 +30,10 @@ function createWindow () {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', createWindow)
+
+app.on('ready-to-show', function () {
+	mainWindow.show()
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {

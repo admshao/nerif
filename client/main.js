@@ -11,7 +11,10 @@ let mainWindow
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({show:false, autoHideMenuBar:true, darkTheme:true})
-  mainWindow.setMenu(null);
+
+  if(process.argv.length < 3 || process.argv[2] == 'false')
+    mainWindow.setMenu(null);
+
   mainWindow.maximize()
 
   // and load the index.html of the app.

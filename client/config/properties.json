@@ -1,0 +1,17 @@
+﻿{
+  "properties": [
+    {
+      "description": "Teste",
+      "type": "string",
+      "apache": "%d",
+      "nginx": "$d"
+    },
+    {
+      "description": "Outro teste",
+      "type": "int",
+      "apache": "%i",
+      "nginx": "$i",
+      "iis": "#i"
+    }
+  ]
+}

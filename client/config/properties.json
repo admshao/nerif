@@ -1,17 +1,43 @@
-ï»¿{
-  "properties": [
-    {
-      "description": "Teste",
-      "type": "string",
-      "apache": "%d",
-      "nginx": "$d"
-    },
-    {
-      "description": "Outro teste",
-      "type": "int",
-      "apache": "%i",
-      "nginx": "$i",
-      "iis": "#i"
-    }
-  ]
+{
+	"properties": [
+		{
+			"description": "Data/hora da requisição",
+			"infoPropriedade": "DATA_HORA",
+			"tipoValor": "DATA_HORA",
+			"apache": "%d",
+			"nginx": "$d"
+		},
+		{
+			"description": "Tempo total da requisição",
+			"infoPropriedade": "TEMPO_REQUISICAO",
+			"tipoValor": "NUMERICO",
+			"apache": "%i",
+			"nginx": "$i",
+			"iis": "#i"
+		},
+		{
+			"description": "URL",
+			"infoPropriedade": "URL",
+			"tipoValor": "STRING",
+			"apache": "%u",
+			"nginx": "$u",
+			"iis": "#u"
+		},
+		{
+			"description": "Porta",
+			"infoPropriedade": "PORTA",
+			"tipoValor": "NUMERICO",
+			"apache": "%p",
+			"nginx": "$p",
+			"iis": "#p"
+		},
+		{
+			"description": "Tamanho",
+			"infoPropriedade": "TAMANHO",
+			"tipoValor": "NUMERICO",
+			"apache": "%t",
+			"nginx": "$t",
+			"iis": "#t"
+		}
+	]
 }

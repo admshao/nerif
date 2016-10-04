@@ -8,15 +8,15 @@
     initComponent: function () {
         var obj = this;
 
-        var dadosServidorContainer = Ext.create('Nerif.component.servidor.Dados', {
+        var dadosServidorContainer = Ext.create('Nerif.component.server.Information', {
             region: 'north'
         });
 
-        var usuariosGrid = Ext.create('Nerif.component.usuario.Grid', {
+        var usuariosGrid = Ext.create('Nerif.component.user.Grid', {
             flex: 1
         });
 
-        var indicadoresGrid = Ext.create('Nerif.component.indicador.Grid', {
+        var indicadoresGrid = Ext.create('Nerif.component.indicator.Grid', {
             flex: 2
         });
 
@@ -32,21 +32,42 @@
             items: [usuariosGrid, indicadoresGrid]
         });
 
-        var groupsGrid = Ext.create('Nerif.component.grupo.Grid', {
+        var groupsGrid = Ext.create('Nerif.component.group.Grid', {
             region: 'south',
             flex: .7
         });
-
+        
+        var saveBtn = Ext.create('Ext.button.Button', {
+        	formBind: true,
+            text: 'Save',
+            handler: function () {
+                Gerenciador.saveConfig(function(err) {
+					if(err) {
+						Ext.Msg.alert('Erro', 'Ocorreu um erro ao salvar suas configurações');
+						console.error(err);
+					} else {
+						Ext.Msg.alert('Ok', 'Configurações salvas com sucesso');
+					}
+				});
+            }
+        });
+        
         var runBtn = Ext.create('Ext.button.Button', {
             formBind: true,
             text: 'Run',
             handler: function () {
-                console.log(obj.getValues());
+                Gerenciador.run(function(err) {
+					if(err) {
+						Ext.Msg.alert('Erro', 'Ocorreu um erro ao salvar suas configurações');
+					} else {
+						//todo ?
+					}
+				});
             }
         });
 
         this.items = [dadosServidorContainer, centerpanel, groupsGrid];
-        this.buttons = ['->', runBtn];
+        this.buttons = ['->', saveBtn, runBtn];
 
         this.on('afterrender', function (me) {
             me.isValid();

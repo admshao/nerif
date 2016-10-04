@@ -5,5 +5,6 @@ public enum TipoComparacao {
 	DIFERENTE,
 	MAIOR_QUE,
 	MENOR_QUE,
-	ENTRE
+	NO_INTERVALO,
+	FORA_DO_INTERVALO
 }

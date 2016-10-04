@@ -1,4 +1,4 @@
-﻿Ext.define('Nerif.component.usuario.Cadastro', {
+﻿Ext.define('Nerif.component.user.Cadastro', {
     extend: 'Ext.window.Window',
 
     modal: true,

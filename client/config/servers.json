@@ -1,0 +1,16 @@
+{
+  "servers": [
+		{
+			"id": "apache",
+			"name": "Apache"
+		},
+		{
+			"id": "nginx",
+			"name": "Nginx"
+		},
+		{
+			"id": "iis",
+			"name": "Windows Server"
+		}
+	]
+}

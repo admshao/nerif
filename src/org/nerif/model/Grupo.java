@@ -1,44 +1,34 @@
 package org.nerif.model;
 
-import java.util.List;
+import java.util.HashSet;
 
 public class Grupo {
 	private int id;
-	private String nome;
-	private List<Usuario> usuarios;
-	private List<Indicador> indicadores;
-	
-	public Grupo(int id, String nome, List<Usuario> usuarios, List<Indicador> indicadores) {
+	private String descricao;
+	private HashSet<Integer> usuarios;
+	private HashSet<Integer> indicadores;
+
+	public Grupo(int id, String descricao, HashSet<Integer> usuarios, HashSet<Integer> indicadores) {
 		this.id = id;
-		this.nome = nome;
+		this.descricao = descricao;
 		this.usuarios = usuarios;
 		this.indicadores = indicadores;
 	}
-	
-	public boolean removeUsuario(Usuario usuario) {
-		return usuarios.remove(usuario);
-	}
-	
-	public boolean addUsuario(Usuario usuario) {
-		if (!usuarios.contains(usuario)) {
-			usuarios.add(usuario);
-			return true;
-		}
-		return false;
-	}
-	
+
 	public int getId() {
 		return id;
 	}
-	public String getNome() {
-		return nome;
+
+	public String getDescricao() {
+		return descricao;
 	}
-	public List<Usuario> getUsuarios() {
+
+	public HashSet<Integer> getUsuarios() {
 		return usuarios;
 	}
-	public List<Indicador> getIndicadores() {
+
+	public HashSet<Integer> getIndicadores() {
 		return indicadores;
 	}
-	
-	
+
 }

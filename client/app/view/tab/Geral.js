@@ -1,4 +1,6 @@
-﻿Ext.define('Nerif.view.tab.Geral', {
+﻿var exec = require('child_process').exec
+
+Ext.define('Nerif.view.tab.Geral', {
     extend: 'Ext.form.Panel',
 
     title: 'Geral',
@@ -53,16 +55,24 @@
         });
         
         var runBtn = Ext.create('Ext.button.Button', {
-            formBind: true,
+            //formBind: true,
             text: 'Run',
             handler: function () {
-                Gerenciador.run(function(err) {
+                /*Gerenciador.run(function(err) {
 					if(err) {
 						Ext.Msg.alert('Erro', 'Ocorreu um erro ao salvar suas configurações');
 					} else {
 						//todo ?
 					}
-				});
+				});*/
+            	child = exec('java -jar ../bin/Nerif.jar',
+    			function(error, stdout, stderr) {
+					console.log('stdout: ' + stdout);
+					console.log('stderr: ' + stderr);
+					if (error !== null) {
+						console.log('exec error: ' + error);
+					}
+			});
             }
         });
 

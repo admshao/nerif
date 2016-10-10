@@ -1,5 +1,7 @@
 {
-	"properties": [
+	"server": "iis",
+	"logDirectory": "/home/shaolin/Logs_IIS/29 de fevereiro",
+	"logProperties": [
 		{
 			"description": "Data da requisi��o",
 			"infoPropriedade": "DATA",
@@ -35,14 +37,6 @@
 			"iis": "s-port"
 		},
 		{
-			"description": "Tamanho",
-			"infoPropriedade": "TAMANHO",
-			"tipoValor": "NUMERICO",
-			"apache": "%t",
-			"nginx": "$t",
-			"iis": "sc-bytes"
-		},
-		{
 			"description": "Tempo total da requisi��o",
 			"infoPropriedade": "TEMPO",
 			"tipoValor": "NUMERICO",
@@ -50,6 +44,46 @@
 			"nginx": "$i",
 			"iis": "time-taken",
 			"id": "extModel40-7"
+		}
+	],
+	"users": [
+		{
+			"id": 0,
+			"nome": "Usuario 1",
+			"email": "asd@asff.co",
+			"telefone": "esse ae"
+		}
+	],
+	"indicators": [
+		{
+			"id": 0,
+			"regras": [
+				{
+					"descPropriedade": "Porta",
+					"tipoValor": "NUMERICO",
+					"infoPropriedade": "PORTA",
+					"tipoComparacao": "DIFERENTE",
+					"valor1": "8000",
+					"id": "extModel335-1"
+				}
+			],
+			"descricao": "Descricao 1"
+		}
+	],
+	"groups": [
+		{
+			"id": 0,
+			"descricao": "Grupo 1",
+			"users": [
+				{
+					"id": 0
+				}
+			],
+			"indicators": [
+				{
+					"id": 0
+				}
+			]
 		}
 	]
 }

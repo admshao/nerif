@@ -28,6 +28,7 @@ import org.nerif.model.Usuario;
 public class Config {
 	public static final Gson GSON = new Gson();
 	public static final Charset CHARSET = Charset.forName("UTF-8");
+	public static final String WHITESPACE = " ";
 
 	public static final Random RANDOM = new Random(System.nanoTime());
 	private static final URI URI_CONFIG = URI
@@ -58,7 +59,8 @@ public class Config {
 		Iterator<JsonElement> iterator = logPropertiesArray.iterator();
 		while (iterator.hasNext()) {
 			JsonObject obj = iterator.next().getAsJsonObject();
-			FormatoLog formatoLog = new FormatoLog(InfoPropriedade.valueOf(obj.get("infoPropriedade").getAsString()),
+			FormatoLog formatoLog = new FormatoLog(obj.get(tipoServidor).getAsString(),
+					InfoPropriedade.valueOf(obj.get("infoPropriedade").getAsString()),
 					TipoValor.valueOf(obj.get("tipoValor").getAsString()));
 			colunasLog.add(formatoLog);
 		}

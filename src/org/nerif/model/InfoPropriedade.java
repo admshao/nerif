@@ -1,8 +1,8 @@
 package org.nerif.model;
 
 public enum InfoPropriedade {
-	DATA_HORA("DATA_HORA"), TEMPO_REQUISICAO("TEMPO_REQUISICAO"), URL("URL"), PORTA("PORTA"), TAMANHO("TAMANHO"), MEDIA(
-			"MEDIA");
+	DATA("DATA"), HORA("HORA"), TEMPO("TEMPO"), URL("URL"), PORTA("PORTA"), TAMANHO(
+			"TAMANHO"), MEDIA("MEDIA");
 
 	private final String infoPropriedade;
 

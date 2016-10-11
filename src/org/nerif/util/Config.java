@@ -40,7 +40,7 @@ public class Config {
 	
 	public static List<FormatoLog> colunasLog = new ArrayList<FormatoLog>();
 	public static HashMap<Integer, Usuario> usuarios = new HashMap<Integer, Usuario>();
-	public static HashMap<Integer, Indicador> indicadores = new HashMap<Integer, Indicador>();
+	public static List<Indicador> indicadores = new ArrayList<Indicador>();
 	public static HashMap<Integer, Grupo> grupos = new HashMap<Integer, Grupo>();
 
 	public static void initConfig() throws IOException {
@@ -79,7 +79,7 @@ public class Config {
 			JsonArray regrasArray = obj.get("regras").getAsJsonArray();
 			Iterator<JsonElement> regraIterator = regrasArray.iterator();
 			List<Regra> regras = new ArrayList<Regra>();
-			while (iterator.hasNext()) {
+			while (regraIterator.hasNext()) {
 				JsonObject regraObj = regraIterator.next().getAsJsonObject();
 				Regra regra = new Regra(regraObj.get("descPropriedade").getAsString(),
 						InfoPropriedade.valueOf(regraObj.get("infoPropriedade").getAsString()),
@@ -91,7 +91,7 @@ public class Config {
 			}
 
 			Indicador indicador = new Indicador(obj.get("id").getAsInt(), obj.get("descricao").getAsString(), regras);
-			indicadores.put(indicador.getId(), indicador);
+			indicadores.add(indicador);
 		}
 
 		iterator = groupsArray.iterator();

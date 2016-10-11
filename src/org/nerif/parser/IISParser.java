@@ -43,7 +43,7 @@ public class IISParser {
 								for (int i : columnIndex) {
 									coluns.add(splitFields[i]);
 								}
-								IndicadoresSimples.getInstance().processaNovaLinha(coluns);
+								IndicadoresSimples.getInstance().processaLinha(coluns);
 							}
 						}
 					}

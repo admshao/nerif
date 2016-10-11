@@ -5,8 +5,8 @@ public class Regra {
 	private InfoPropriedade infoPropriedade;
 	private TipoComparacao tipoComparacao;
 	private TipoValor tipoValor;
-	private Object valor1;
-	private Object valor2;
+	private String valor1;
+	private String valor2;
 
 	public Regra(String descricao, InfoPropriedade infoPropriedade, TipoComparacao tipoComparacao, TipoValor tipoValor,
 			String valor1, String valor2) {
@@ -34,11 +34,11 @@ public class Regra {
 		return tipoValor;
 	}
 
-	public Object getValor1() {
+	public String getValor1() {
 		return valor1;
 	}
 
-	public Object getValor2() {
+	public String getValor2() {
 		return valor2;
 	}
 }

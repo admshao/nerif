@@ -49,7 +49,67 @@
                 xtype: 'templatecolumn',
                 text: 'Regras',
                 flex: 1,
-                tpl: '{descPropriedade} - {infoPropriedade} - {tipoComparacao} - {tipoValor} - {valor1} - {valor2}'
+                tpl: Ext.create('Ext.XTemplate',
+                	'<span>{[this.getDescricaoRegra(values)]}</span>',
+                	{
+                		getDescricaoRegra: function(values) {
+                			var desc = values.descPropriedade;
+                			
+                			switch(values.tipoComparacao) {
+                				case 'IGUAL':
+	                				desc += ' igual a ' + values.valor1;
+	                				break;
+                				case 'DIFERENTE':
+	                				desc += ' diferente de ' + values.valor1;
+	                				break;
+                				case 'MAIOR_QUE':
+	                				desc += ' maior que ' + values.valor1;
+	                				break;
+                				case 'MENOR_QUE':
+	                				desc += ' menor que ' + values.valor1;
+	                				break;
+                				case 'NO_INTERVALO':
+	                				desc += ' entre ' + values.valor1 + ' e' + values.valor2;
+	                				break;
+                				case 'FORA_DO_INTERVALO':
+	                				desc += ' fora do intervalo de ' + values.valor1 + ' a ' + values.valor2;
+	                				break;
+                			}
+                			
+                			return desc;
+                		}
+                	}
+        		) 
+            }, {
+        		xtype: 'actioncolumn',
+        		width: 60,
+        		items: [{
+        			iconCls: 'edit',
+        			tooltip: 'Editar',
+        			handler: function (grid, rowIndex, colIndex) {
+        				var rec = grid.getStore().getAt(rowIndex);
+
+        				Ext.create('Nerif.component.indicator.CadastroRegra', {
+        					listeners: {
+        						'regrasalva': function (dados) {
+        							rec.set(dados);
+        						}
+        					}
+        				}).editar(rec);
+        			}
+        		}, {
+        			iconCls: 'delete',
+        			tooltip: 'Remover',
+        			handler: function (grid, rowIndex, colIndex) {
+        				var rec = grid.getStore().getAt(rowIndex);
+
+        				Ext.Msg.confirm('Atenção', 'Deseja mesmo remover está regra?', function(btn) {
+        					if(btn === 'yes') {
+        						grid.getStore().remove(rec);		
+        					}
+        				});  
+        			}
+        		}]
             }],
             buttons: ['->', adicionarRegraBtn]
         });

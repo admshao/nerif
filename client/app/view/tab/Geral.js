@@ -13,7 +13,13 @@ Ext.define('Nerif.view.tab.Geral', {
         var dadosServidorContainer = Ext.create('Nerif.component.server.Information', {
             region: 'north'
         });
-
+        
+        dadosServidorContainer.on('serverchanged', function(){
+        	usuariosGrid.getStore().loadData(Gerenciador.users);
+        	indicadoresGrid.getStore().loadData(Gerenciador.indicators);
+        	groupsGrid.getStore().loadData(Gerenciador.groups);
+        });
+        
         var usuariosGrid = Ext.create('Nerif.component.user.Grid', {
             flex: 1
         });
@@ -40,7 +46,6 @@ Ext.define('Nerif.view.tab.Geral', {
         });
         
         var saveBtn = Ext.create('Ext.button.Button', {
-        	formBind: true,
             text: 'Save',
             handler: function () {
                 Gerenciador.saveConfig(function(err) {

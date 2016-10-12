@@ -1,0 +1,12 @@
+.edit {
+	background: url(../images/edit.png) no-repeat !important;
+}
+
+.delete {
+	background: url(../images/delete.png) no-repeat !important;
+}
+
+.fa-folder-open:before {
+	font: 14px/28px FontAwesome;
+	content: "\f07c" !important; 
+}

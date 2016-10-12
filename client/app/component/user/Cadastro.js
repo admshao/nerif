@@ -27,7 +27,9 @@
 
         var telefoneUsuarioText = Ext.create('Ext.form.Text', {
             name: 'telefone',
-            fieldLabel: 'Telefone'
+            fieldLabel: 'Telefone',
+            regex: /^[+][0-9]*$/,
+            emptyText: '+999999999999'
         });
 
         var cancelarBtn = Ext.create('Ext.button.Button', {

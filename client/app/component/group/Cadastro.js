@@ -25,7 +25,7 @@
 		var usuariosGrid = Ext.create('Ext.grid.Panel', {
 			flex: 1,
 			store: Ext.create('Ext.data.Store', {
-				fields: ['id', 'nome', 'email', 'telefone'],
+				fields: ['id', 'nome'],
 				data: Gerenciador.users
 			}),
 			columns: [{
@@ -42,7 +42,7 @@
 		var indicadoresGrid = Ext.create('Ext.grid.Panel', {
 			flex: 1,
 			store: Ext.create('Ext.data.Store', {
-				fields: ['id', 'descricao', 'regras'],
+				fields: ['id', 'descricao'],
 				data: Gerenciador.indicators
 			}),
 			columns: [{

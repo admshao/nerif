@@ -6,9 +6,12 @@
 	},
 	
 	store: Ext.create('Ext.data.Store', {
-		fields: ['id', 'users', 'indicators'],
+		fields: [{ name: 'id', type: 'int' }, 'descricao', 'users', 'indicators'],
 		data: Gerenciador.groups,
 		listeners: {
+			'update': function(me) {
+				Gerenciador.groups = Ext.Array.pluck(me.getData().items, 'data');
+			},
 			'datachanged': function(me, value) {
 				Gerenciador.groups = Ext.Array.pluck(me.getData().items, 'data');
 			}
@@ -35,7 +38,7 @@
 		xtype: 'actioncolumn',
 		width: 60,
 		items: [{
-			icon: 'images/edit.png',
+			iconCls: 'edit',
 			tooltip: 'Editar',
 			handler: function (grid, rowIndex, colIndex) {
 				var rec = grid.getStore().getAt(rowIndex);
@@ -49,7 +52,7 @@
 				}).editar(rec);
 			}
 		}, {
-			icon: 'images/delete.png',
+			iconCls: 'delete',
 			tooltip: 'Remover',
 			handler: function (grid, rowIndex, colIndex) {
 				Ext.Msg.confirm('Atenção', 'Está ação irá excluir este grupo. Deseja continuar?', function(btn) {

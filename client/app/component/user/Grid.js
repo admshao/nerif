@@ -6,9 +6,12 @@
 	},
 
 	store: Ext.create('Ext.data.Store', {
-		fields: ['id', 'nome', 'email', 'telefone'],
+		fields: [{ name: 'id', type: 'int'}, 'nome', 'email', 'telefone'],
 		data: Gerenciador.users,
 		listeners: {
+			'update': function(me) {
+				Gerenciador.users = Ext.Array.pluck(me.getData().items, 'data');
+			},
 			'datachanged': function(me, value) {
 				Gerenciador.users = Ext.Array.pluck(me.getData().items, 'data');
 			}
@@ -32,7 +35,7 @@
 		xtype: 'actioncolumn',
 		width: 60,
 		items: [{
-			icon: 'images/edit.png',
+			iconCls: 'edit',
 			tooltip: 'Editar',
 			handler: function (grid, rowIndex, colIndex) {
 				var rec = grid.getStore().getAt(rowIndex);
@@ -46,7 +49,7 @@
 				}).editar(rec);
 			}
 		}, {
-			icon: 'images/delete.png',
+			iconCls: 'delete',
 			tooltip: 'Remover',
 			handler: function (grid, rowIndex, colIndex) {
 				var rec = grid.getStore().getAt(rowIndex);

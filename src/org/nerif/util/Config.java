@@ -32,8 +32,8 @@ public class Config {
 
 	public static final Random RANDOM = new Random(System.nanoTime());
 	private static final URI URI_CONFIG = URI
-			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/app/view/config.json"); // ESTA LINHA PARA ECLIPSE
-			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/app/view/config.json"); // ESTA LINHA PARA BUILDS
+			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json"); // ESTA LINHA PARA ECLIPSE
+			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json"); // ESTA LINHA PARA BUILDS
 
 	public static String tipoServidor;
 	public static String caminhoLog;

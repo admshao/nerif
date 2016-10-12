@@ -1,22 +1,20 @@
 {
 	"properties": [
 		{
-			"description": "Data da requisiï¿½ï¿½o",
+			"description": "Data da requisição",
 			"infoPropriedade": "DATA",
 			"tipoValor": "DATA",
 			"iis": "date",
 			"apache": "%d",
-			"nginx": "$d",
-			"id": "extModel40-6"
+			"nginx": "$d"
 		},
 		{
-			"description": "Hora da requisiï¿½ï¿½o",
+			"description": "Hora da requisição",
 			"infoPropriedade": "HORA",
 			"tipoValor": "HORA",
 			"iis": "time",
 			"apache": "%d",
-			"nginx": "$d",
-			"id": "extModel45-6"
+			"nginx": "$d"
 		},
 		{
 			"description": "URL",
@@ -43,13 +41,12 @@
 			"iis": "sc-bytes"
 		},
 		{
-			"description": "Tempo total da requisiï¿½ï¿½o",
+			"description": "Tempo total da requisição",
 			"infoPropriedade": "TEMPO",
 			"tipoValor": "NUMERICO",
 			"apache": "%i",
 			"nginx": "$i",
-			"iis": "time-taken",
-			"id": "extModel40-7"
+			"iis": "time-taken"
 		}
 	]
 }

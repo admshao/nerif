@@ -30,7 +30,38 @@
 				direction: 'ASC'
 			}]
 		});
+		
+		var ajustarCampos = function(value, clear) {
+			logDirectoryText.enable();
+			logDirectoryText.setValue(null);
+			logDirectoryText.validate();
 
+			logFormatTag.enable();
+			logFormatTag.suspendEvent('beforedeselect');
+			logFormatTag.setValue(null);
+			logFormatTag.resumeEvent('beforedeselect');
+			logFormatTag.validate();
+
+			logFormatTag.valueField = value;
+
+			logFormatStore.clearFilter();
+			logFormatStore.filterBy(function (rec) {						
+				return !!rec.get(logFormatTag.valueField);
+			});
+
+			if(clear) {
+				Gerenciador.clear();
+			}
+			
+			Gerenciador.server = value;			
+			
+			updateHelpPanel();
+			
+			if(clear) {
+				obj.fireEvent('serverchanged');
+			}
+		};
+		
 		var serverComboBox = Ext.create('Ext.form.ComboBox', {
 			allowBlank: false,
 			store: serverStore,
@@ -39,25 +70,20 @@
 			displayField: 'name',
 			fieldLabel: 'Servidor',
 			listeners: {
-				'change': function (me, value) {
-					logDirectoryText.enable();
-					logDirectoryText.setValue(null);
-					logDirectoryText.validate();
-
-					logFormatTag.enable();
-					logFormatTag.suspendEvent('beforedeselect');
-					logFormatTag.setValue(null);
-					logFormatTag.resumeEvent('beforedeselect');
-					logFormatTag.validate();
-
-					logFormatTag.valueField = value;
-
-					logFormatStore.clearFilter();
-					logFormatStore.filterBy(function (rec) {
-						return !!rec.get(logFormatTag.valueField);
-					});
-
-					Gerenciador.server = value;
+				'change': function (me, value, old) {
+					if(old) {
+						Ext.Msg.confirm('Atenção', 'Todas as configurações serão perdidas. Deseja continuar?', function(btn) {
+							if(btn === 'yes') {
+								ajustarCampos(value, true);
+							} else {
+								me.suspendEvent('change');
+								me.setValue(old);
+								me.resumeEvent('change');
+							}
+						});
+					} else {					
+						ajustarCampos(value, false);
+					}
 				}
 			}
 		});
@@ -66,7 +92,7 @@
 
 		var logDirectoryText = Ext.create('Ext.form.Text', {
 			allowBlank: false,
-			fieldLabel: 'Diretório',
+			fieldLabel: 'Diretório (logs)',
 			disabled: true,
 			editable: false,
 			listeners: {
@@ -76,16 +102,32 @@
 			},
 			triggers: {
 				chooser: {
+					cls: 'fa-folder-open',
 					hideOnReadOnly: false,
 					handler: function() {
-						logDirectoryText.setValue(dialog.showOpenDialog({properties: ['openDirectory']}));
+						var dir = dialog.showOpenDialog({properties: ['openDirectory']});
+						if(dir)
+							logDirectoryText.setValue(dir);
 					}
 				}
 			}
 		});
 
+		Ext.define('Property', {
+			extend: 'Ext.data.Model',
+			idProperty: 'infoPropriedade',
+			fields: [
+			         { name: 'description' },
+			         { name: 'infoPropriedade' },
+			         { name: 'tipoValor' },
+			         { name: 'apache' },
+			         { name: 'nginx' },
+			         { name: 'iis' }
+			         ]
+		});
+
 		var logFormatStore = Ext.create('Ext.data.Store', {
-			fields: ['description', 'type', 'apache', 'nginx', 'iis'],
+			model: 'Property',
 			proxy: {
 				type: 'ajax',
 				url: 'config/properties.json',
@@ -104,9 +146,9 @@
 			store: logFormatStore,
 			allowBlank: false,
 			filterPickList: true,
-			fieldLabel: 'Formato',
-			valueField: '',
+			fieldLabel: 'Formato (logs)',
 			displayField: 'description',
+			queryMode: 'local',
 			disabled: true,
 			listeners: {
 				'beforedeselect': function (me, record) {
@@ -138,7 +180,7 @@
 		});
 
 		var helpPanel = Ext.create('Ext.panel.Panel', {
-			flex: 1,
+			flex: .6,
 			margin: '0 10px'
 		});
 
@@ -156,8 +198,8 @@
 							Ext.Array.forEach(Gerenciador.logProperties, function(rec) {
 								var idx = logFormatTag.getStore().findBy(function(format) {
 									return format.data.infoPropriedade === rec.infoPropriedade
-										 	&& format.data.tipoValor === rec.tipoValor
-										   	&& format.data[Gerenciador.server] === rec[Gerenciador.server];
+									&& format.data.tipoValor === rec.tipoValor
+									&& format.data[Gerenciador.server] === rec[Gerenciador.server];
 								});
 
 								if(idx !== -1)

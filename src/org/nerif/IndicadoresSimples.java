@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.nerif.model.ConcurrentDateFormat;
+import org.nerif.model.ConcurrentTimeFormat;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.Indicador;
 import org.nerif.model.InfoPropriedade;
@@ -14,23 +16,12 @@ import org.nerif.model.ValidaIndicador;
 import org.nerif.util.Config;
 
 public class IndicadoresSimples {
-	private static IndicadoresSimples instance = null;
-
-	public static IndicadoresSimples getInstance() {
-		if (instance == null) {
-			instance = new IndicadoresSimples();
-		}
-		return instance;
-	}
-
+	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
+	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
 	private ValidaIndicador[] indicadoresBase = new ValidaIndicador[Config.indicadores.size()];
 	private HashMap<InfoPropriedade, Boolean> verificaColuna = new HashMap<>();
 
-	private IndicadoresSimples() {
-
-	}
-
-	public void init() {
+	public IndicadoresSimples() {
 		for (FormatoLog formato : Config.colunasLog) {
 			verificaColuna.put(formato.getInfoPropriedade(), false);
 		}
@@ -139,7 +130,7 @@ public class IndicadoresSimples {
 								break;
 							case DATA:
 								try {
-									Date result = Config.dfData.parse(cols.get(k));
+									Date result = dfData.convertStringToDate(cols.get(k));
 									switch (regra.getTipoComparacao()) {
 									case IGUAL:
 										if (result.compareTo(regra.getValorData1()) == 0) {
@@ -182,7 +173,7 @@ public class IndicadoresSimples {
 								break;
 							case HORA:
 								try {
-									Date result = Config.dfHora.parse(cols.get(k));
+									Date result = dfHora.convertStringToDate(cols.get(k));
 									switch (regra.getTipoComparacao()) {
 									case IGUAL:
 										if (result.compareTo(regra.getValorData1()) == 0) {

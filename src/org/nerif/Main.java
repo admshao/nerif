@@ -9,15 +9,16 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			Config.initConfig();
-			IndicadoresSimples.getInstance().init();
-			switch(Config.tipoServidor) {
-				case "iis":
-					IISParser parser = new IISParser();
-					parser.run();
-				default:
-					break;
+			switch (Config.tipoServidor) {
+			case "iis":
+				IISParser parser = new IISParser();
+				parser.run();
+			default:
+				break;
 			}
-		
+			
+			Config.THREAD_POOL_EXECUTOR.shutdown();
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -28,9 +28,9 @@ public class Regra {
 		switch (infoPropriedade) {
 		case DATA:
 			try {
-				valorData1 = Config.dfData.parse(valor1);
+				valorData1 = Config.dfData.convertStringToDate(valor1);
 				if (valor2 != null) {
-					valorData2 = Config.dfData.parse(valor2);
+					valorData2 = Config.dfData.convertStringToDate(valor2);
 				}
 			} catch (ParseException e) {
 				e.printStackTrace();
@@ -38,9 +38,9 @@ public class Regra {
 			break;
 		case HORA:
 			try {
-				valorData1 = Config.dfHora.parse(valor1);
+				valorData1 = Config.dfHora.convertStringToDate(valor1);
 				if (valor2 != null) {
-					valorData2 = Config.dfHora.parse(valor2);
+					valorData2 = Config.dfHora.convertStringToDate(valor2);
 				}
 			} catch (ParseException e) {
 				e.printStackTrace();

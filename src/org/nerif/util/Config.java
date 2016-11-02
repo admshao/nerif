@@ -5,19 +5,21 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.nerif.gson.Gson;
 import org.nerif.gson.JsonArray;
 import org.nerif.gson.JsonElement;
 import org.nerif.gson.JsonObject;
+import org.nerif.model.ConcurrentDateFormat;
+import org.nerif.model.ConcurrentTimeFormat;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.Grupo;
 import org.nerif.model.Indicador;
@@ -31,8 +33,9 @@ public class Config {
 	public static final Gson GSON = new Gson();
 	public static final Charset CHARSET = Charset.forName("UTF-8");
 	public static final String WHITESPACE = " ";
-	public static final DateFormat dfData = new SimpleDateFormat("yyyy-MM-dd");
-	public static final DateFormat dfHora = new SimpleDateFormat("kk:mm:ss");
+	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
+	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
+	public static final ExecutorService THREAD_POOL_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 	public static final Random RANDOM = new Random(System.nanoTime());
 	private static final URI URI_CONFIG = URI

@@ -15,7 +15,6 @@ public class Alertas {
 	}
 
 	private Alertas() {
-
 	}
 
 	public void notificaIndicatorAtivo(Indicador indicador, List<String> cols) {

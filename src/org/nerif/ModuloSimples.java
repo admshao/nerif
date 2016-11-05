@@ -15,13 +15,13 @@ import org.nerif.model.Regra;
 import org.nerif.model.ValidaIndicador;
 import org.nerif.util.Config;
 
-public class IndicadoresSimples {
+public class ModuloSimples {
 	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
 	private ValidaIndicador[] indicadoresBase = new ValidaIndicador[Config.indicadores.size()];
 	private HashMap<InfoPropriedade, Boolean> verificaColuna = new HashMap<>();
 
-	public IndicadoresSimples() {
+	public ModuloSimples() {
 		for (FormatoLog formato : Config.colunasLog) {
 			verificaColuna.put(formato.getInfoPropriedade(), false);
 		}
@@ -49,19 +49,19 @@ public class IndicadoresSimples {
 		}
 	}
 
-	private void validaIndicadores(List<String> cols) {
+	private void validaIndicadores(final List<String> cols) {
 		for (ValidaIndicador validaIndicador : indicadoresBase) {
 			boolean ok = true;
 			for (boolean b : validaIndicador.regras) {
 				ok &= b;
 			}
 			if (ok) {
-				Alertas.getInstance().notificaIndicatorAtivo(validaIndicador.indicador, cols);
+				ModuloAlerta.getInstance().notificaIndicatorAtivo(validaIndicador.indicador, cols);
 			}
 		}
 	}
 
-	public void processaLinha(List<String> cols) {
+	public void processaLinha(final List<String> cols) {
 		resetaVerificacao();
 
 		for (int i = 0; i != Config.indicadores.size(); i++) {
@@ -224,6 +224,11 @@ public class IndicadoresSimples {
 									break;
 								case DIFERENTE:
 									if (!valor1StringCols.equalsIgnoreCase(regra.getValorString1())) {
+										indicadoresBase[i].regras.set(j, true);
+									}
+									break;
+								case CONTENHA:
+									if (valor1StringCols.contains(regra.getValorString1())) {
 										indicadoresBase[i].regras.set(j, true);
 									}
 									break;

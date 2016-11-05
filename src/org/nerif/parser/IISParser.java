@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.nerif.IndicadoresSimples;
+import org.nerif.ModuloSimples;
 import org.nerif.model.FormatoLog;
 import org.nerif.util.Config;
 
@@ -29,7 +29,7 @@ public class IISParser {
 
 		@Override
 		public void run() {
-			IndicadoresSimples indicadorSimples = new IndicadoresSimples();
+			final ModuloSimples indicadorSimples = new ModuloSimples();
 			int lastIndex = 0;
 			ArrayList<Integer> columnIndex = new ArrayList<>();
 			try {
@@ -38,6 +38,7 @@ public class IISParser {
 					String line = iterator.next();
 					if (line.startsWith("#")) {
 						if (line.startsWith("#Fields:")) {
+							columnIndex = new ArrayList<>();
 							String[] splitFields = line.split(Config.WHITESPACE);
 							for (FormatoLog formato : Config.colunasLog) {
 								for (int i = 1; i != splitFields.length; i++) {
@@ -52,7 +53,7 @@ public class IISParser {
 					} else {
 						String[] splitFields = line.split(Config.WHITESPACE);
 						if (lastIndex + 1 <= splitFields.length) {
-							ArrayList<String> coluns = new ArrayList<>(columnIndex.size());
+							final ArrayList<String> coluns = new ArrayList<>(columnIndex.size());
 							for (int i : columnIndex) {
 								coluns.add(splitFields[i]);
 							}

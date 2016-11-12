@@ -12,8 +12,8 @@ public class Regra {
 	private TipoValor tipoValor;
 	private String valorString1;
 	private String valorString2;
-	private Double valorDouble1;
-	private Double valorDouble2;
+	private Long valorLong1;
+	private Long valorLong2;
 	private Boolean valorBoolean1;
 	private Boolean valorBoolean2;
 	private Date valorData1;
@@ -49,9 +49,9 @@ public class Regra {
 		case PORTA:
 		case TAMANHO:
 		case TEMPO:
-			valorDouble1 = Double.parseDouble(valor1);
+			valorLong1 = Long.parseLong(valor1);
 			if (valor2 != null) {
-				valorDouble2 = Double.parseDouble(valor2);
+				valorLong2 = Long.parseLong(valor2);
 			}
 			break;
 		case URL:
@@ -87,12 +87,12 @@ public class Regra {
 		return valorString2;
 	}
 
-	public Double getValorDouble1() {
-		return valorDouble1;
+	public Long getValorLong1() {
+		return valorLong1;
 	}
 
-	public Double getValorDouble2() {
-		return valorDouble2;
+	public Long getValorLong2() {
+		return valorLong2;
 	}
 
 	public Boolean getValorBoolean1() {

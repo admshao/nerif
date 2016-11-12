@@ -4,7 +4,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 import org.nerif.model.ConcurrentDateFormat;
 import org.nerif.model.ConcurrentTimeFormat;
@@ -49,19 +48,19 @@ public class ModuloSimples {
 		}
 	}
 
-	private void validaIndicadores(final List<String> cols) {
+	private void validaIndicadores(final HashMap<String, String> cols) {
 		for (ValidaIndicador validaIndicador : indicadoresBase) {
 			boolean ok = true;
 			for (boolean b : validaIndicador.regras) {
 				ok &= b;
 			}
 			if (ok) {
-				ModuloAlerta.getInstance().notificaIndicatorAtivo(validaIndicador.indicador, cols);
+				ModuloAlerta.getInstance().indicadorAtivado(validaIndicador.indicador, cols);
 			}
 		}
 	}
 
-	public void processaLinha(final List<String> cols) {
+	public void processaLinha(final HashMap<String, String> cols) {
 		resetaVerificacao();
 
 		for (int i = 0; i != Config.indicadores.size(); i++) {
@@ -69,177 +68,172 @@ public class ModuloSimples {
 			for (int j = 0; j != indicador.getRegras().size(); j++) {
 				Regra regra = indicador.getRegras().get(j);
 				if (verificaColuna.get(regra.getInfoPropriedade())) {
-					for (int k = 0; k != Config.colunasLog.size(); k++) {
-						if (Config.colunasLog.get(k).getInfoPropriedade().equals(regra.getInfoPropriedade())) {
-							switch (regra.getTipoValor()) {
-							case NUMERICO:
-								double valor1IntCol = Double.valueOf(cols.get(k));
-								switch (regra.getTipoComparacao()) {
-								case IGUAL:
-									if (valor1IntCol == regra.getValorDouble1()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case DIFERENTE:
-									if (valor1IntCol != regra.getValorDouble1()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case MAIOR_QUE:
-									if (valor1IntCol > regra.getValorDouble1()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case MENOR_QUE:
-									if (valor1IntCol < regra.getValorDouble1()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case NO_INTERVALO:
-									if (valor1IntCol >= regra.getValorDouble1()
-											&& valor1IntCol <= regra.getValorDouble2()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case FORA_DO_INTERVALO:
-									if (valor1IntCol <= regra.getValorDouble1()
-											|| valor1IntCol >= regra.getValorDouble2()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								default:
-									break;
+					String s = cols.get(regra.getInfoPropriedade().getInfoPropriedade());
+					switch (regra.getTipoValor()) {
+					case NUMERICO:
+						double valor1IntCol = Double.valueOf(s);
+						switch (regra.getTipoComparacao()) {
+						case IGUAL:
+							if (valor1IntCol == regra.getValorLong1()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case DIFERENTE:
+							if (valor1IntCol != regra.getValorLong1()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case MAIOR_QUE:
+							if (valor1IntCol > regra.getValorLong1()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case MENOR_QUE:
+							if (valor1IntCol < regra.getValorLong1()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case NO_INTERVALO:
+							if (valor1IntCol >= regra.getValorLong1() && valor1IntCol <= regra.getValorLong2()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case FORA_DO_INTERVALO:
+							if (valor1IntCol <= regra.getValorLong1() || valor1IntCol >= regra.getValorLong2()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						default:
+							break;
+						}
+						break;
+					case BOOLEAN:
+						boolean valor1BooleanCols = Boolean.valueOf(s);
+						switch (regra.getTipoComparacao()) {
+						case IGUAL:
+							if (valor1BooleanCols == regra.getValorBoolean1()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case DIFERENTE:
+							if (valor1BooleanCols != regra.getValorBoolean1()) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						default:
+							break;
+						}
+						break;
+					case DATA:
+						try {
+							Date result = dfData.convertStringToDate(s);
+							switch (regra.getTipoComparacao()) {
+							case IGUAL:
+								if (result.compareTo(regra.getValorData1()) == 0) {
+									indicadoresBase[i].regras.set(j, true);
 								}
 								break;
-							case BOOLEAN:
-								boolean valor1BooleanCols = Boolean.valueOf(cols.get(k));
-								switch (regra.getTipoComparacao()) {
-								case IGUAL:
-									if (valor1BooleanCols == regra.getValorBoolean1()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case DIFERENTE:
-									if (valor1BooleanCols != regra.getValorBoolean1()) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								default:
-									break;
+							case DIFERENTE:
+								if (result.compareTo(regra.getValorData1()) != 0) {
+									indicadoresBase[i].regras.set(j, true);
 								}
 								break;
-							case DATA:
-								try {
-									Date result = dfData.convertStringToDate(cols.get(k));
-									switch (regra.getTipoComparacao()) {
-									case IGUAL:
-										if (result.compareTo(regra.getValorData1()) == 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case DIFERENTE:
-										if (result.compareTo(regra.getValorData1()) != 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case MAIOR_QUE:
-										if (result.compareTo(regra.getValorData1()) > 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case MENOR_QUE:
-										if (result.compareTo(regra.getValorData1()) < 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case NO_INTERVALO:
-										if (result.compareTo(regra.getValorData1()) >= 0
-												&& result.compareTo(regra.getValorData2()) <= 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case FORA_DO_INTERVALO:
-										if (result.compareTo(regra.getValorData1()) < 0
-												|| result.compareTo(regra.getValorData2()) > 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									default:
-										break;
-									}
-								} catch (ParseException e) {
-									e.printStackTrace();
+							case MAIOR_QUE:
+								if (result.compareTo(regra.getValorData1()) > 0) {
+									indicadoresBase[i].regras.set(j, true);
 								}
 								break;
-							case HORA:
-								try {
-									Date result = dfHora.convertStringToDate(cols.get(k));
-									switch (regra.getTipoComparacao()) {
-									case IGUAL:
-										if (result.compareTo(regra.getValorData1()) == 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case DIFERENTE:
-										if (result.compareTo(regra.getValorData1()) != 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case MAIOR_QUE:
-										if (result.compareTo(regra.getValorData1()) > 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case MENOR_QUE:
-										if (result.compareTo(regra.getValorData1()) < 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case NO_INTERVALO:
-										if (result.compareTo(regra.getValorData1()) >= 0
-												&& result.compareTo(regra.getValorData2()) <= 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									case FORA_DO_INTERVALO:
-										if (result.compareTo(regra.getValorData1()) < 0
-												|| result.compareTo(regra.getValorData2()) > 0) {
-											indicadoresBase[i].regras.set(j, true);
-										}
-										break;
-									default:
-										break;
-									}
-								} catch (ParseException e) {
-									e.printStackTrace();
+							case MENOR_QUE:
+								if (result.compareTo(regra.getValorData1()) < 0) {
+									indicadoresBase[i].regras.set(j, true);
 								}
 								break;
-							case STRING:
-								String valor1StringCols = cols.get(k);
-								switch (regra.getTipoComparacao()) {
-								case IGUAL:
-									if (valor1StringCols.equalsIgnoreCase(regra.getValorString1())) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case DIFERENTE:
-									if (!valor1StringCols.equalsIgnoreCase(regra.getValorString1())) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								case CONTENHA:
-									if (valor1StringCols.contains(regra.getValorString1())) {
-										indicadoresBase[i].regras.set(j, true);
-									}
-									break;
-								default:
-									break;
+							case NO_INTERVALO:
+								if (result.compareTo(regra.getValorData1()) >= 0
+										&& result.compareTo(regra.getValorData2()) <= 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							case FORA_DO_INTERVALO:
+								if (result.compareTo(regra.getValorData1()) < 0
+										|| result.compareTo(regra.getValorData2()) > 0) {
+									indicadoresBase[i].regras.set(j, true);
 								}
 								break;
 							default:
 								break;
 							}
+						} catch (ParseException e) {
+							e.printStackTrace();
 						}
+						break;
+					case HORA:
+						try {
+							Date result = dfHora.convertStringToDate(s);
+							switch (regra.getTipoComparacao()) {
+							case IGUAL:
+								if (result.compareTo(regra.getValorData1()) == 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							case DIFERENTE:
+								if (result.compareTo(regra.getValorData1()) != 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							case MAIOR_QUE:
+								if (result.compareTo(regra.getValorData1()) > 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							case MENOR_QUE:
+								if (result.compareTo(regra.getValorData1()) < 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							case NO_INTERVALO:
+								if (result.compareTo(regra.getValorData1()) >= 0
+										&& result.compareTo(regra.getValorData2()) <= 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							case FORA_DO_INTERVALO:
+								if (result.compareTo(regra.getValorData1()) < 0
+										|| result.compareTo(regra.getValorData2()) > 0) {
+									indicadoresBase[i].regras.set(j, true);
+								}
+								break;
+							default:
+								break;
+							}
+						} catch (ParseException e) {
+							e.printStackTrace();
+						}
+						break;
+					case STRING:
+						String valor1StringCols = s;
+						switch (regra.getTipoComparacao()) {
+						case IGUAL:
+							if (valor1StringCols.equalsIgnoreCase(regra.getValorString1())) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case DIFERENTE:
+							if (!valor1StringCols.equalsIgnoreCase(regra.getValorString1())) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						case CONTENHA:
+							if (valor1StringCols.contains(regra.getValorString1())) {
+								indicadoresBase[i].regras.set(j, true);
+							}
+							break;
+						default:
+							break;
+						}
+						break;
+					default:
+						break;
 					}
 				}
 			}

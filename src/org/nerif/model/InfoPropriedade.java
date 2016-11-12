@@ -9,7 +9,7 @@ public enum InfoPropriedade {
 	InfoPropriedade(String infoPropriedade) {
 		this.infoPropriedade = infoPropriedade;
 	}
-
+	
 	public String getInfoPropriedade() {
 		return infoPropriedade;
 	}

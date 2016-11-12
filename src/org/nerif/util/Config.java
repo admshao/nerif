@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,8 +36,11 @@ public class Config {
 	public static final String WHITESPACE = " ";
 	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
+	
 	public static final ExecutorService THREAD_POOL_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
+	public static final Timer TIMER = new Timer();
+	public static volatile int activeThreads = 0;
+	
 	public static final Random RANDOM = new Random(System.nanoTime());
 	private static final URI URI_CONFIG = URI
 			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json"); // ESTA LINHA PARA ECLIPSE

@@ -50,11 +50,7 @@ public class ModuloSimples {
 
 	private void validaIndicadores(final HashMap<String, String> cols) {
 		for (ValidaIndicador validaIndicador : indicadoresBase) {
-			boolean ok = true;
-			for (boolean b : validaIndicador.regras) {
-				ok &= b;
-			}
-			if (ok) {
+			if (validaIndicador.regras.stream().reduce(true, (a, b) -> a & b)) {
 				ModuloAlerta.getInstance().indicadorAtivado(validaIndicador.indicador, cols);
 			}
 		}

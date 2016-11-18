@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.nerif.parser.IISParser;
 import org.nerif.util.Config;
+import org.nerif.util.Email;
+import org.nerif.util.SMS;
 
 public class Main {
 	public static void main(String[] args) {
@@ -12,7 +14,9 @@ public class Main {
 		try {
 			Config.initConfig();
 
-			ModuloAlerta.getInstance().iniciaAlertas();
+			Email.getInstance();
+			SMS.getInstance();
+			ModuloAlerta.getInstance().init();
 
 			switch (Config.tipoServidor) {
 			case "iis":
@@ -25,6 +29,8 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		Email.getInstance().close();
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {

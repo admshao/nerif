@@ -16,7 +16,7 @@ public class ConcurrentDateTimeFormat {
 
   @Override
   protected DateFormat initialValue() {
-   return new SimpleDateFormat("yyyy-MM-ddkk:mm:ss");
+   return new SimpleDateFormat("dd/MM/yyyy kk:mm:ss");
   }
 
   @Override
@@ -33,6 +33,10 @@ public class ConcurrentDateTimeFormat {
 
  public Date convertStringToDate(String dateString) throws ParseException {
   return df.get().parse(dateString);
+ }
+ 
+ public String convertDateToString(Date date) throws ParseException {
+  return df.get().format(date);
  }
 
 }

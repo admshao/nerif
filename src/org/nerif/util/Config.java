@@ -20,6 +20,7 @@ import org.nerif.gson.JsonArray;
 import org.nerif.gson.JsonElement;
 import org.nerif.gson.JsonObject;
 import org.nerif.model.ConcurrentDateFormat;
+import org.nerif.model.ConcurrentDateTimeFormat;
 import org.nerif.model.ConcurrentTimeFormat;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.Grupo;
@@ -36,10 +37,27 @@ public class Config {
 	public static final String WHITESPACE = " ";
 	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
+	public static final ConcurrentDateTimeFormat dfDataHora = new ConcurrentDateTimeFormat();
 	
 	public static final ExecutorService THREAD_POOL_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	public static final Timer TIMER = new Timer();
 	public static volatile int activeThreads = 0;
+	
+	public static String EMAIL_USERNAME;
+	public static String EMAIL_PASSWORD;
+	public static final String EMAIL_FROM = "Nerif - Sistema de Monitoramento";
+	public static final String EMAIL_SUBJECT = "Alerta de Indicador Disparado!";
+	public static final String EMAIL_BODY = "<!doctype html><html><head><title></title></head><body><h1>Atencao</h1><p>Foi "
+			+ "detectada uma violacao de um indicador vinculado a um grupo no qual voce faz parte.</p><p><strong>Descricao "
+			+ "do Indicador:</strong></p><p>%indicador%</p><p><strong>Data e Hora da Deteccao:</strong></p><p>%data%</p>"
+			+ "<p><strong>Numero de vezes que este alerta foi disparado hoje:</strong></p><p>%vezes%</p></body></html>";
+	
+	public static String SMS_ACCOUNT_SID;
+	public static String SMS_AUTH_TOKEN;
+	public static String SMS_PHONE_NUMBER;
+	public static final String SMS_BODY = "Atencao. Foi detectada uma violacao de um indicador vinculado a um grupo no qual voce"
+			+ " faz parte. Descricao do Indicador: %indicador%. Data e Hora da Deteccao: %data%. Numero de vezes que este alerta "
+			+ "foi disparado hoje: %vezes%.";
 	
 	public static final Random RANDOM = new Random(System.nanoTime());
 	private static final URI URI_CONFIG = URI
@@ -49,10 +67,10 @@ public class Config {
 	public static String tipoServidor;
 	public static String caminhoLog;
 	
-	public static List<FormatoLog> colunasLog = new ArrayList<FormatoLog>();
-	public static HashMap<Integer, Usuario> usuarios = new HashMap<Integer, Usuario>();
-	public static List<Indicador> indicadores = new ArrayList<Indicador>();
-	public static HashMap<Integer, Grupo> grupos = new HashMap<Integer, Grupo>();
+	public static List<FormatoLog> colunasLog = new ArrayList<>();
+	public static HashMap<Integer, Usuario> usuarios = new HashMap<>();
+	public static HashMap<Integer, Indicador> indicadores = new HashMap<>();
+	public static HashMap<Integer, Grupo> grupos = new HashMap<>();
 
 	public static void initConfig() throws IOException {
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
@@ -61,6 +79,15 @@ public class Config {
 
 		tipoServidor = cfgFileObj.get("server").getAsString();
 		caminhoLog = cfgFileObj.get("logDirectory").getAsString();
+		
+		String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");
+		EMAIL_USERNAME = emailSplit[0];
+		EMAIL_PASSWORD = emailSplit[1];
+		
+		String[] smsSplit = cfgFileObj.get("sms").getAsString().split(";");
+		SMS_ACCOUNT_SID = smsSplit[0];
+		SMS_AUTH_TOKEN = smsSplit[1];
+		SMS_PHONE_NUMBER = smsSplit[2];
 
 		JsonArray logPropertiesArray = cfgFileObj.get("logProperties").getAsJsonArray();
 		JsonArray usersArray = cfgFileObj.get("users").getAsJsonArray();
@@ -102,7 +129,7 @@ public class Config {
 			}
 
 			Indicador indicador = new Indicador(obj.get("id").getAsInt(), obj.get("descricao").getAsString(), regras);
-			indicadores.add(indicador);
+			indicadores.put(indicador.getId(), indicador);
 		}
 
 		iterator = groupsArray.iterator();
@@ -111,18 +138,18 @@ public class Config {
 
 			JsonArray tmpArray = obj.get("users").getAsJsonArray();
 			Iterator<JsonElement> tmpIterator = tmpArray.iterator();
-			HashSet<Integer> usersHashSet = new HashSet<Integer>();
+			HashSet<Usuario> usersHashSet = new HashSet<>();
 			while (tmpIterator.hasNext()) {
 				JsonObject regraObj = tmpIterator.next().getAsJsonObject();
-				usersHashSet.add(regraObj.get("id").getAsInt());
+				usersHashSet.add(usuarios.get(regraObj.get("id").getAsInt()));
 			}
 
 			tmpArray = obj.get("indicators").getAsJsonArray();
 			tmpIterator = tmpArray.iterator();
-			HashSet<Integer> indicatorsHashSet = new HashSet<Integer>();
+			HashSet<Indicador> indicatorsHashSet = new HashSet<>();
 			while (tmpIterator.hasNext()) {
 				JsonObject tmpObj = tmpIterator.next().getAsJsonObject();
-				indicatorsHashSet.add(tmpObj.get("id").getAsInt());
+				indicatorsHashSet.add(indicadores.get(tmpObj.get("id").getAsInt()));
 			}
 
 			Grupo grupo = new Grupo(obj.get("id").getAsInt(), obj.get("descricao").getAsString(), usersHashSet,

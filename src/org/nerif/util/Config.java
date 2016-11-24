@@ -108,10 +108,10 @@ public class Config {
 			return;
 		}
 
-		URI_CONFIG = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
+		URI_CONFIG = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
 		//URI_CONFIG = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json").toURI(); // ESTAS LINHAS PARA BUILDS
 		
-		URI_TRAINING = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
+		URI_TRAINING = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
 		//URI_TRAINING = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
 		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);

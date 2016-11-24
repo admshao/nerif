@@ -12,6 +12,16 @@
 		var obj = this;
 
 		var updateHelpPanel = function() {
+			if(!Gerenciador.logProperties || Gerenciador.logProperties.length === 0) return '';
+
+				var html = '';
+
+				html += 'Por favor, verifique se a configuração do formato do log do seu servidor contém a(s) seguinte(s) propriedade(s): ';		
+				html += '<br />';				
+				html += Ext.Array.pluck(Gerenciador.logProperties, Gerenciador.server).join(' ');
+
+				return html;
+			
 			helpPanel.update(Gerenciador.getServerDescription());
 		};
 
@@ -69,6 +79,7 @@
 			valueField: 'id',
 			displayField: 'name',
 			fieldLabel: 'Servidor',
+			queryMode: 'local',
 			listeners: {
 				'change': function (me, value, old) {
 					if(old) {
@@ -113,21 +124,8 @@
 			}
 		});
 
-		Ext.define('Property', {
-			extend: 'Ext.data.Model',
-			idProperty: 'infoPropriedade',
-			fields: [
-			         { name: 'description' },
-			         { name: 'infoPropriedade' },
-			         { name: 'tipoValor' },
-			         { name: 'apache' },
-			         { name: 'nginx' },
-			         { name: 'iis' }
-			         ]
-		});
-
 		var logFormatStore = Ext.create('Ext.data.Store', {
-			model: 'Property',
+			fields: [{ name: 'description', type: 'string' }, 'infoPropriedade', 'tipoValor', 'apache', 'nginx', 'iis'],
 			proxy: {
 				type: 'ajax',
 				url: 'config/properties.json',
@@ -146,7 +144,7 @@
 			store: logFormatStore,
 			allowBlank: false,
 			filterPickList: true,
-			fieldLabel: 'Formato (logs)',
+			fieldLabel: 'Propriedades',
 			displayField: 'description',
 			queryMode: 'local',
 			disabled: true,
@@ -170,21 +168,37 @@
 			}
 		});
 
+		var helpPanel = Ext.create('Ext.panel.Panel');
+		
 		var infoPanel = Ext.create('Ext.form.FieldContainer', {
 			flex: 1,
 			fieldDefaults: {
 				labelAlign: 'right',
 				width: '100%'
 			},
-			items: [serverComboBox, logDirectoryText, logFormatTag]
+			items: [serverComboBox, logDirectoryText, logFormatTag, helpPanel]
 		});
 
-		var helpPanel = Ext.create('Ext.panel.Panel', {
-			flex: .6,
-			margin: '0 10px'
+		var dataExecucaoField = Ext.create('Ext.form.Time', {
+			fieldLabel: 'Informe qual horário você deseja receber o relatório diário gerado pela ferramenta: ' + 
+				'(esta configuração também será utilizada para a verificação dos indicadores marcados como históricos)',
+			labelAlign: 'top',
+			format: 'H:i',
+			allowBlank: false,
+			listeners: {
+				'change': function(me, value) {
+					//todo
+				}
+			}
 		});
-
-		this.items = [infoPanel, helpPanel];
+		
+		var dataPanel = Ext.create('Ext.form.FieldContainer', {
+			flex: .5,
+			margin: '0 10px',
+			items: [dataExecucaoField]
+		});
+		
+		this.items = [infoPanel, dataPanel];
 
 		this.on('afterrender', function() {
 			logFormatStore.load({

@@ -6,6 +6,8 @@
 
         this.items = [{
             xclass: 'Nerif.view.tab.Geral'
+        }, {
+        	xclass: 'Nerif.view.tab.Estatistica'
         }];
 
         this.callParent();

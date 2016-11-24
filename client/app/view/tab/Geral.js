@@ -46,7 +46,7 @@ Ext.define('Nerif.view.tab.Geral', {
         });
         
         var saveBtn = Ext.create('Ext.button.Button', {
-            text: 'Save',
+            text: 'Salvar configurações',
             handler: function () {
                 Gerenciador.saveConfig(function(err) {
 					if(err) {
@@ -60,8 +60,8 @@ Ext.define('Nerif.view.tab.Geral', {
         });
         
         var runBtn = Ext.create('Ext.button.Button', {
-            //formBind: true,
-            text: 'Run',
+            formBind: true,
+            text: 'Start',
             handler: function () {
                 /*Gerenciador.run(function(err) {
 					if(err) {
@@ -70,7 +70,7 @@ Ext.define('Nerif.view.tab.Geral', {
 						//todo ?
 					}
 				});*/
-            	child = exec('java -jar ../bin/Nerif.jar',
+            	child = exec('java -jar ../bin/Nerif.jar -a -e',
     			function(error, stdout, stderr) {
 					console.log('stdout: ' + stdout);
 					console.log('stderr: ' + stderr);

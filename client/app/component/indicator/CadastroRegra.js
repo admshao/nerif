@@ -23,9 +23,28 @@
 			}
 		};
 
+		var getLabelCampoByTipoComparacao = function(tipoComparacao, index) {
+			switch(tipoComparacao) {
+				case 'IGUAL':
+					return 'Igual a';
+				case 'DIFERENTE':
+					return 'Diferente de';
+				case 'MAIOR_QUE':
+					return 'Maior que';
+				case 'MENOR_QUE':
+					return 'Menor que';
+				case 'NO_INTERVALO':
+					return index === 1 ? 'Entre' : 'e';
+				case 'FORA_DO_INTERVALO':
+					return index === 1 ? 'Fora do intervalo entre' : 'e';
+			
+			}
+		};
+		
 		var createNumericoFields = function(tipoComparacao) {
 			var valor1Field = Ext.create('Ext.form.Number', {
 				name: 'valor1',
+				fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 1),
 				allowBlank: false
 			});
 			
@@ -34,6 +53,7 @@
 			if(tipoComparacao === 'NO_INTERVALO' || tipoComparacao === 'FORA_DO_INTERVALO') {
 				var valor2Field = Ext.create('Ext.form.Number', {
 					name: 'valor2',
+					fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 2),
 					allowBlank: false
 				});
 				
@@ -44,7 +64,10 @@
 		var createDataFields = function(tipoComparacao) {
 			var valor1Field = Ext.create('Ext.form.Date', {
 				name: 'valor1',
-				allowBlank: false
+				allowBlank: false,
+				fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 1),
+				format: 'd/m/Y',
+				submitFormat: 'Y-m-d'
 			});
 			
 			valoresContainer.add(valor1Field);
@@ -52,7 +75,10 @@
 			if(tipoComparacao === 'NO_INTERVALO' || tipoComparacao === 'FORA_DO_INTERVALO') {
 				var valor2Field = Ext.create('Ext.form.Date', {
 					name: 'valor2',
-					allowBlank: false
+					allowBlank: false,
+					fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 2),
+					format: 'd/m/Y',
+					submitFormat: 'Y-m-d'
 				});
 				
 				valoresContainer.add(valor2Field);
@@ -62,7 +88,9 @@
 		var createHoraFields = function(tipoComparacao) {
 			var valor1Field = Ext.create('Ext.form.Time', {
 				name: 'valor1',
-				allowBlank: false
+				allowBlank: false,
+				fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 1),
+				format: 'H:i:s'
 			});
 			
 			valoresContainer.add(valor1Field);
@@ -70,7 +98,9 @@
 			if(tipoComparacao === 'NO_INTERVALO' || tipoComparacao === 'FORA_DO_INTERVALO') {
 				var valor2Field = Ext.create('Ext.form.Time', {
 					name: 'valor2',
-					allowBlank: false
+					allowBlank: false,
+					fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 2),
+					format: 'H:i:s'
 				});
 				
 				valoresContainer.add(valor2Field);
@@ -80,6 +110,7 @@
 		var createStringFields = function(tipoComparacao) {
 			var valor1Field = Ext.create('Ext.form.Text', {
 				name: 'valor1',
+				fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 1),
 				allowBlank: false
 			});
 			
@@ -88,7 +119,8 @@
 		
 		var createBooleanFields = function(tipoComparacao) {
 			var valor1Field = Ext.create('Ext.form.CheckBox', {
-				name: 'valor1'
+				name: 'valor1',
+				fieldLabel: getLabelCampoByTipoComparacao(tipoComparacao, 1)
 			});
 			
 			valoresContainer.add(valor1Field);
@@ -199,6 +231,7 @@
 			bodyPadding: '10px',
 			fieldDefaults: {
 				labelAlign: 'right',
+				labelWidth: 150,
 				width: 400
 			},
 			items: [descPropriedadeHdn, tipoValorHdn, propriedadeCombo, tipoComparacaoCombo, valoresContainer],

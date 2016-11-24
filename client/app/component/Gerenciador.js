@@ -9,22 +9,15 @@ Ext.define('Nerif.component.Gerenciador', {
 	server: '',
 	logDirectory: '',
 	logProperties: [],
-
+	executionTime: '',
+	
+	indicatorsModule: true,
+	statisticsModule: true,
+	analysisModule: true,	
+	
 	users: [],
 	indicators: [],
 	groups: [],
-
-	getServerDescription: function() {
-		if(!this.logProperties || this.logProperties.length === 0) return '';
-
-		var html = '';
-
-		html += 'Por favor, verifique se a configuração do formato do log do seu servidor contém a(s) seguinte(s) propriedade(s): ';		
-		html += '<br /><br />';				
-		html += Ext.Array.pluck(this.logProperties, this.server).join(' ');
-
-		return html;
-	},
 
 	clear: function() {
 		var obj = this;
@@ -139,7 +132,7 @@ Ext.define('Nerif.component.Gerenciador', {
 		});
 		data.groups = groups;
 		
-		fs.writeFile('./config/config.json', JSON.stringify(data), callback); 
+		fs.writeFile('./config/config.json', JSON.stringify(data), callback);		
 	},
 
 	run: function(callback) {

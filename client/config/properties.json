@@ -1,7 +1,7 @@
 {
 	"properties": [
 		{
-			"description": "Data da requisição",
+			"description": "Data da requisiÃ§Ã£o",
 			"infoPropriedade": "DATA",
 			"tipoValor": "DATA",
 			"iis": "date",
@@ -9,7 +9,7 @@
 			"nginx": "$d"
 		},
 		{
-			"description": "Hora da requisição",
+			"description": "Hora da requisiÃ§Ã£o",
 			"infoPropriedade": "HORA",
 			"tipoValor": "HORA",
 			"iis": "time",
@@ -41,7 +41,7 @@
 			"iis": "sc-bytes"
 		},
 		{
-			"description": "Tempo total da requisição",
+			"description": "Tempo total da requisiÃ§Ã£o",
 			"infoPropriedade": "TEMPO",
 			"tipoValor": "NUMERICO",
 			"apache": "%i",

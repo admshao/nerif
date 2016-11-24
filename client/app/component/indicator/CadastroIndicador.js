@@ -55,24 +55,36 @@
                 		getDescricaoRegra: function(values) {
                 			var desc = values.descPropriedade;
                 			
+                			var valor1 = values.valor1;
+                			var valor2 = values.valor2;
+                			
+                			if(values.tipoValor === 'DATA') {
+                				
+                				if(valor1)
+                					valor1 = Ext.Date.format(Ext.Date.parse(valor1, 'Y-m-d'), 'd/m/Y');
+                				
+                				if(valor2)
+                					valor2 = Ext.Date.format(Ext.Date.parse(valor2, 'Y-m-d'), 'd/m/Y');
+                			}
+                			
                 			switch(values.tipoComparacao) {
                 				case 'IGUAL':
-	                				desc += ' igual a ' + values.valor1;
+	                				desc += ' igual a ' + valor1;
 	                				break;
                 				case 'DIFERENTE':
-	                				desc += ' diferente de ' + values.valor1;
+	                				desc += ' diferente de ' + valor1;
 	                				break;
                 				case 'MAIOR_QUE':
-	                				desc += ' maior que ' + values.valor1;
+	                				desc += ' maior que ' + valor1;
 	                				break;
                 				case 'MENOR_QUE':
-	                				desc += ' menor que ' + values.valor1;
+	                				desc += ' menor que ' + valor1;
 	                				break;
                 				case 'NO_INTERVALO':
-	                				desc += ' entre ' + values.valor1 + ' e' + values.valor2;
+	                				desc += ' entre ' + valor1 + ' e ' + valor2;
 	                				break;
                 				case 'FORA_DO_INTERVALO':
-	                				desc += ' fora do intervalo de ' + values.valor1 + ' a ' + values.valor2;
+	                				desc += ' fora do intervalo de ' + valor1 + ' a ' + valor2;
 	                				break;
                 			}
                 			
@@ -129,7 +141,7 @@
             	if(regrasStore.getCount()) {
             		regrasHdn.setValue(JSON.stringify(Ext.Array.pluck(regrasStore.getData().items, 'data')));
             	} else {
-            		regras.setValue(null);
+            		regrasHdn.setValue(null);
             	}
             	
                 obj.fireEvent('indicadorsalvo', formpanel.getValues());

@@ -109,10 +109,10 @@ public class Config {
 		}
 
 		URI_CONFIG = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
-		//URI_CONFIG = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json").toURI(); // ESTAS LINHAS PARA BUILDS
+		//URI_CONFIG = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json").toURI(); // ESTAS LINHAS PARA BUILDS
 		
 		URI_TRAINING = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
-		//URI_TRAINING = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
+		//URI_TRAINING = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
 		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
 		JsonElement cfgFileElement = GSON.fromJson(configString, JsonElement.class);
@@ -159,7 +159,7 @@ public class Config {
 		iterator = indicatorsArray.iterator();
 		while (iterator.hasNext()) {
 			JsonObject obj = iterator.next().getAsJsonObject();
-			JsonArray regrasArray = obj.get("regras").getAsJsonArray();
+			JsonArray regrasArray = GSON.fromJson(obj.get("regras").getAsString(), JsonArray.class);
 			Iterator<JsonElement> regraIterator = regrasArray.iterator();
 			List<Regra> regras = new ArrayList<Regra>();
 			while (regraIterator.hasNext()) {

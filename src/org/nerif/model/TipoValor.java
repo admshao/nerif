@@ -1,7 +1,7 @@
 package org.nerif.model;
 
 public enum TipoValor {
-	NUMERICO("NUMERICO"), PERCENTUAL("PERCENTUAL"), DATA("DATA"), HORA("HORA"), STRING("STRING"), BOOLEAN(
+	NUMERICO("NUMERICO"), DATA("DATA"), HORA("HORA"), STRING("STRING"), BOOLEAN(
 			"BOOLEAN");
 
 	private final String tipoValor;

@@ -23,10 +23,13 @@ public class IISParser {
 					Config.THREAD_POOL_EXECUTOR.submit(new ArquivoExistenteSimples(f.toFile()));
 				});
 
-		Files.walk(Paths.get(Config.caminhoLog)).parallel()
-				.filter(file -> file.toFile().isFile() && file.toFile().getName().endsWith(".log")).forEach(f -> {
-					Config.THREAD_POOL_EXECUTOR.submit(new ArquivoExistenteEstatistico(f.toFile()));
-				});
+		if (Config.EXECUTA_MODULO_ESTATISTICO) {
+			Files.walk(Paths.get(Config.caminhoLog)).parallel()
+					.filter(file -> file.toFile().isFile() && file.toFile().getName().endsWith(".log")).forEach(f -> {
+						Config.activeThreads++;
+						Config.THREAD_POOL_EXECUTOR.submit(new ArquivoExistenteEstatistico(f.toFile()));
+					});
+		}
 
 		Config.THREAD_POOL_EXECUTOR.shutdown();
 
@@ -99,6 +102,9 @@ public class IISParser {
 				e.printStackTrace();
 			}
 
+			if (--Config.activeThreads == 0) {
+				Config.TIMER.cancel();
+			}
 		}
 
 	}

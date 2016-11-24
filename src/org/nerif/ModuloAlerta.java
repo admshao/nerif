@@ -55,64 +55,78 @@ public class ModuloAlerta {
 		lock.lock();
 		indicadorQuantidadeAtivacoes.compute(indicador, (k, v) -> v == null ? 1l : v + 1);
 
-		if (alertarUsuario.get(indicador)) {
-			alertarUsuario.put(indicador, false);
-			Config.TIMER.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					alertarUsuario.put(indicador, true);
-				}
-			}, 30 * 60 * 1000);
-
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						Stream<List<Usuario>> usuariosSet = Config.grupos.values().parallelStream()
-								.filter(g -> g.getIndicadores().contains(indicador))
-								.map(g -> g.getUsuarios().parallelStream().map(u -> u).collect(Collectors.toList()));
-
-						Set<String> setTelefone = new HashSet<String>();
-						Set<String> setEmail = new HashSet<String>();
-						usuariosSet.forEach(usuarios -> {
-							usuarios.forEach(user -> {
-								setTelefone.add(user.getTelefone());
-								setEmail.add(user.getEmail());
-							});
-						});
-						String dataAgora = Config.dfDataHora.convertDateToString(new Date());
-						final String num = String.valueOf(indicadorQuantidadeAtivacoes.get(indicador));
-						notificaIndicadorAtivadoPorEmail(setEmail.stream().collect(Collectors.toList()), indicador, dataAgora, num);
-						notificaIndicadorAtivadoPorSMS(setTelefone.stream().collect(Collectors.toList()), indicador, dataAgora, num);
-					} catch (Exception e) {
-						e.printStackTrace();
+		if (Config.EMAIL_ALERT || Config.SMS_ALERT) {
+			if (alertarUsuario.get(indicador)) {
+				alertarUsuario.put(indicador, false);
+				Config.TIMER.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						alertarUsuario.put(indicador, true);
 					}
-				}
-			}).start();
+				}, 30 * 60 * 1000);
+
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							Stream<List<Usuario>> usuariosSet = Config.grupos.values().parallelStream()
+									.filter(g -> g.getIndicadores().contains(indicador)).map(g -> g.getUsuarios()
+											.parallelStream().map(u -> u).collect(Collectors.toList()));
+
+							Set<String> setTelefone = new HashSet<String>();
+							Set<String> setEmail = new HashSet<String>();
+							usuariosSet.forEach(usuarios -> {
+								usuarios.forEach(user -> {
+									setTelefone.add(user.getTelefone());
+									setEmail.add(user.getEmail());
+								});
+							});
+							String dataAgora = Config.dfDataHora.convertDateToString(new Date());
+							final String num = String.valueOf(indicadorQuantidadeAtivacoes.get(indicador));
+							if (Config.EMAIL_ALERT) {
+								notificaIndicadorAtivadoPorEmail(setEmail.stream().collect(Collectors.toList()),
+										indicador, dataAgora, num);
+							}
+							if (Config.SMS_ALERT) {
+								notificaIndicadorAtivadoPorSMS(setTelefone.stream().collect(Collectors.toList()),
+										indicador, dataAgora, num);
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}).start();
+			}
 		}
 		lock.unlock();
 	}
 
-	public void dump() {
-		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
-		final HashMap<String, Long> urlQuantidade = estatisticas.getUrlQuantidadeEstatistica();
-		final HashMap<String, Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
+	public void gerarRelatorio() {
+		if (Config.EXECUTA_MODULO_ESTATISTICO) {
+			EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
+			final HashMap<String, Long> urlQuantidade = estatisticas.getUrlQuantidadeEstatistica();
+			final HashMap<String, Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
 
-		String urlMax = urlQuantidade.keySet().parallelStream()
-				.max((entry1, entry2) -> urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 : -1).get();
+			String urlMax = urlQuantidade.keySet().parallelStream()
+					.max((entry1, entry2) -> urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 : -1).get();
 
-		long totalRequest = urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
+			long totalRequest = urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
 
-		long totalUrlRequest = urlQuantidade.get(urlMax);
-		double urlTempoMedio = urlDuracao.get(urlMax) / totalUrlRequest;
+			long totalUrlRequest = urlQuantidade.get(urlMax);
+			double urlTempoMedio = urlDuracao.get(urlMax) / totalUrlRequest;
 
-		System.out.println("Numero total de requisicoes realizadas -> " + totalRequest);
-		System.out.println("Url \"" + urlMax + "\" foi executada " + totalUrlRequest + " vezes.");
-		System.out.println("Com tempo de resposta medio de -> " + urlTempoMedio + "ms");
+			System.out.println("Numero total de requisicoes realizadas -> " + totalRequest);
+			System.out.println("Url \"" + urlMax + "\" foi executada " + totalUrlRequest + " vezes.");
+			System.out.println("Com tempo de resposta medio de -> " + urlTempoMedio + "ms");
+		}
 
 		indicadorQuantidadeAtivacoes.forEach((chave, valor) -> {
 			System.out.println("Indicador -> " + chave.getDescricao() + " foi ativado #: "
 					+ indicadorQuantidadeAtivacoes.get(chave) + " vezes.");
 		});
+		
+		if (Config.EXECUTA_MODULO_ANALISE) {
+			ModuloAnalise.getInstance().dump();
+		}
 	}
 }

@@ -15,8 +15,8 @@ import org.nerif.model.ValidaIndicador;
 import org.nerif.util.Config;
 
 public class ModuloSimples {
-	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
-	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
+	public final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
+	public final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
 	private ValidaIndicador[] indicadoresBase = new ValidaIndicador[Config.indicadores.size()];
 	private HashMap<InfoPropriedade, Boolean> verificaColuna = new HashMap<>();
 
@@ -49,10 +49,15 @@ public class ModuloSimples {
 	}
 
 	private void validaIndicadores(final HashMap<String, String> cols) {
+		boolean indicadorAtivado = false;
 		for (ValidaIndicador validaIndicador : indicadoresBase) {
 			if (validaIndicador.regras.stream().reduce(true, (a, b) -> a & b)) {
 				ModuloAlerta.getInstance().indicadorAtivado(validaIndicador.indicador, cols);
+				indicadorAtivado = true;
 			}
+		}
+		if (Config.EXECUTA_MODULO_ANALISE) {
+			ModuloAnalise.getInstance().processaLinha(cols, indicadorAtivado);
 		}
 	}
 

@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class DecisionNode {
 	public int col;
 	public String value;
-	public HashMap<String, Integer> results;
+	public HashMap<String, Long> results;
 	public DecisionNode tb;
 	public DecisionNode fb;
 

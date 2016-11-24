@@ -35,6 +35,10 @@ public class Config {
 	public static final Gson GSON = new Gson();
 	public static final Charset CHARSET = Charset.forName("UTF-8");
 	public static final String WHITESPACE = " ";
+	
+	public static boolean EXECUTA_MODULO_ESTATISTICO = false;
+	public static boolean EXECUTA_MODULO_ANALISE = false;
+	
 	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
 	public static final ConcurrentDateTimeFormat dfDataHora = new ConcurrentDateTimeFormat();
@@ -43,6 +47,10 @@ public class Config {
 	public static final Timer TIMER = new Timer();
 	public static volatile int activeThreads = 0;
 	
+	public static final String BOM = "b";
+	public static final String RUIM = "r";
+	
+	public static boolean EMAIL_ALERT = false;
 	public static String EMAIL_USERNAME;
 	public static String EMAIL_PASSWORD;
 	public static final String EMAIL_FROM = "Nerif - Sistema de Monitoramento";
@@ -51,7 +59,8 @@ public class Config {
 			+ "detectada uma violacao de um indicador vinculado a um grupo no qual voce faz parte.</p><p><strong>Descricao "
 			+ "do Indicador:</strong></p><p>%indicador%</p><p><strong>Data e Hora da Deteccao:</strong></p><p>%data%</p>"
 			+ "<p><strong>Numero de vezes que este alerta foi disparado hoje:</strong></p><p>%vezes%</p></body></html>";
-	
+
+	public static boolean SMS_ALERT = false;
 	public static String SMS_ACCOUNT_SID;
 	public static String SMS_AUTH_TOKEN;
 	public static String SMS_PHONE_NUMBER;
@@ -61,8 +70,13 @@ public class Config {
 	
 	public static final Random RANDOM = new Random(System.nanoTime());
 	private static final URI URI_CONFIG = URI
-			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json"); // ESTA LINHA PARA ECLIPSE
-			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json"); // ESTA LINHA PARA BUILDS
+			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json"); // ESTAS LINHAS PARA ECLIPSE
+			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json"); // ESTAS LINHAS PARA BUILDS
+	
+	private static final URI URI_TRAINING = URI
+			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json"); // ESTAS LINHAS PARA ECLIPSE
+			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json"); // ESTAS LINHAS PARA ECLIPSE
+	
 
 	public static String tipoServidor;
 	public static String caminhoLog;
@@ -72,7 +86,26 @@ public class Config {
 	public static HashMap<Integer, Indicador> indicadores = new HashMap<>();
 	public static HashMap<Integer, Grupo> grupos = new HashMap<>();
 
-	public static void initConfig() throws IOException {
+	public static void initConfig(String[] args) throws IOException {
+		for (String arg : args) {
+			switch (arg) {
+			case "-e":
+			case "--modulo-estatistico":
+				EXECUTA_MODULO_ESTATISTICO = true;
+				break;
+			case "-a":
+			case "--modulo-analise":
+				EXECUTA_MODULO_ANALISE = true;
+				break;
+			default:
+				break;
+			}
+		}
+		
+		if (EXECUTA_MODULO_ANALISE && !EXECUTA_MODULO_ESTATISTICO) {
+			return;
+		}
+		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
 		JsonElement cfgFileElement = GSON.fromJson(configString, JsonElement.class);
 		JsonObject cfgFileObj = cfgFileElement.getAsJsonObject();
@@ -155,6 +188,16 @@ public class Config {
 			Grupo grupo = new Grupo(obj.get("id").getAsInt(), obj.get("descricao").getAsString(), usersHashSet,
 					indicatorsHashSet);
 			grupos.put(grupo.getId(), grupo);
+		}
+		
+		if (EXECUTA_MODULO_ANALISE) {
+			if (Paths.get(URI_TRAINING).toFile().exists()) {
+				String trainingString = new String(Files.readAllBytes(Paths.get(URI_TRAINING)), CHARSET);
+				JsonElement trainingFileElement = GSON.fromJson(trainingString, JsonElement.class);
+				JsonObject trainingFileObj = trainingFileElement.getAsJsonObject();
+			} else {
+				System.out.println("Training does not exists.");
+			}
 		}
 	}
 }

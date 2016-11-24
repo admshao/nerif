@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.nerif.util.Config;
+
 @SuppressWarnings("serial")
 public class DecisionTree {
 
@@ -11,10 +13,17 @@ public class DecisionTree {
 	private List<String> result;
 	private DecisionNode tree;
 
+	private static HashMap<Integer, Double> rowEntropy;
+	private static HashMap<Integer, HashMap<String, Long>> rowUniques;
+	private static HashMap<String, List<List<List<String>>>> rowDividedSets;
+
 	public DecisionTree(List<List<String>> data, List<String> result) {
 		this.tree = null;
 		this.data = data;
 		this.result = result;
+		rowEntropy = new HashMap<>();
+		rowUniques = new HashMap<>();
+		rowDividedSets = new HashMap<>();
 	}
 
 	public void print() {
@@ -95,13 +104,13 @@ public class DecisionTree {
 		}
 	}
 
-	public HashMap<String, Integer> classify(List<String> entry) {
+	public boolean classify(List<String> entry) {
 		return classify(tree, entry);
 	}
 
-	private HashMap<String, Integer> classify(final DecisionNode node, final List<String> entry) {
+	private boolean classify(final DecisionNode node, final List<String> entry) {
 		if (node.results != null) {
-			return node.results;
+			return node.results.get(Config.BOM) > node.results.get(Config.RUIM);
 		}
 		final String arg1 = entry.get(node.col);
 		DecisionNode branchNode;
@@ -119,11 +128,10 @@ public class DecisionTree {
 			return new DecisionNode();
 		double currentScore = entropy(rows);
 		double bestGain = 0;
-		double columnCount = rows.get(0).size() - 1;
+		int columnCount = rows.get(0).size() - 1;
 		final HashMap<Integer, String> bestCriteria = new HashMap<>();
 		List<List<List<String>>> bestSets = new ArrayList<>();
-		int col = 0;
-		for (col = 0; col < columnCount; col++) {
+		for (int col = 0; col < columnCount; col++) {
 			List<String> columnValues = new ArrayList<>();
 			for (int i = 0; i < rows.size(); i++) {
 				columnValues.add(rows.get(i).get(col));
@@ -157,36 +165,43 @@ public class DecisionTree {
 					results = uniqueCounts(rows);
 				}
 			};
-		}
 
+		}
 	}
 
 	public double entropy(final List<List<String>> rows) {
+		final int rowHash = rows.hashCode();
+		if (rowEntropy.containsKey(rowHash))
+			return rowEntropy.get(rowHash);
 		double ent = 0;
-		final HashMap<String, Integer> results = uniqueCounts(rows);
+		final HashMap<String, Long> results = uniqueCounts(rows);
 		for (String o : results.keySet()) {
-			final double p = 1.0 * results.get(o) / rows.size();
+			final double p = 1.0 * (results.get(o) + 1) / rows.size();
 			ent -= 1.0 * p * (Math.log(p) / Math.log(2));
 		}
-
+		rowEntropy.put(rowHash, ent);
 		return ent;
 	}
 
-	public HashMap<String, Integer> uniqueCounts(final List<List<String>> rows) {
-		final HashMap<String, Integer> results = new HashMap<>();
-		for (int i = 0; i != rows.size(); i++) {
-			final List<String> rowObj = rows.get(i);
-			final String r = rowObj.get(rowObj.size() - 1);
-			results.put(r, results.containsKey(r) ? results.get(r) + 1 : 1);
-		}
+	public HashMap<String, Long> uniqueCounts(final List<List<String>> rows) {
+		final int rowHash = rows.hashCode();
+		if (rowUniques.containsKey(rowHash))
+			return rowUniques.get(rowHash);
+		final HashMap<String, Long> results = new HashMap<>();
+		results.put(Config.BOM, rows.parallelStream().filter(p -> p.get(p.size() - 1).equals(Config.BOM)).count());
+		results.put(Config.RUIM, rows.parallelStream().filter(p -> p.get(p.size() - 1).equals(Config.RUIM)).count());
+		rowUniques.put(rowHash, results);
 		return results;
 	}
 
-	public boolean isNumeric(String str) {
+	private boolean isNumeric(String str) {
 		return str.matches("-?\\d+(\\.\\d+)?");
 	}
 
 	public List<List<List<String>>> divideSet(final List<List<String>> rows, final int col, final String value) {
+		final String rowHash = col + ";" + value;
+		if (rowDividedSets.containsKey(rowHash))
+			return rowDividedSets.get(rowHash);
 		List<List<List<String>>> sets = new ArrayList<List<List<String>>>() {
 			{
 				add(new ArrayList<>());
@@ -194,18 +209,19 @@ public class DecisionTree {
 			}
 		};
 
-		for (int i = 0; i != rows.size(); i++) {
-			boolean res = false;
-			final List<String> row = rows.get(i);
-			final String arg1 = row.get(col);
-			if (isNumeric(value)) {
-				res = Double.parseDouble(arg1) >= Double.parseDouble(value);
-			} else {
-				res = arg1.equals(value);
-			}
-			sets.get(res ? 0 : 1).add(row);
+		if (isNumeric(value)) {
+			double valueD = Double.parseDouble(value);
+			rows.forEach(v -> {
+				boolean res = Double.parseDouble(v.get(col)) >= valueD;
+				sets.get(res ? 0 : 1).add(v);
+			});
+		} else {
+			rows.forEach(v -> {
+				sets.get(v.get(col).equals(value) ? 0 : 1).add(v);
+			});
 		}
 
+		rowDividedSets.put(rowHash, sets);
 		return sets;
 	}
 }

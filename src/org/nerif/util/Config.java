@@ -120,15 +120,19 @@ public class Config {
 
 		tipoServidor = cfgFileObj.get("server").getAsString();
 		caminhoLog = cfgFileObj.get("logDirectory").getAsString();
-		
-		String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");
-		EMAIL_USERNAME = emailSplit[0];
-		EMAIL_PASSWORD = emailSplit[1];
-		
-		String[] smsSplit = cfgFileObj.get("sms").getAsString().split(";");
-		SMS_ACCOUNT_SID = smsSplit[0];
-		SMS_AUTH_TOKEN = smsSplit[1];
-		SMS_PHONE_NUMBER = smsSplit[2];
+
+		if (EMAIL_ALERT) {
+			String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");
+			EMAIL_USERNAME = emailSplit[0];
+			EMAIL_PASSWORD = emailSplit[1];
+		}
+
+		if (SMS_ALERT) {
+			String[] smsSplit = cfgFileObj.get("sms").getAsString().split(";");
+			SMS_ACCOUNT_SID = smsSplit[0];
+			SMS_AUTH_TOKEN = smsSplit[1];
+			SMS_PHONE_NUMBER = smsSplit[2];
+		}
 
 		JsonArray logPropertiesArray = cfgFileObj.get("logProperties").getAsJsonArray();
 		JsonArray usersArray = cfgFileObj.get("users").getAsJsonArray();

@@ -41,6 +41,7 @@ Ext.define('Nerif.component.Gerenciador', {
 			obj.server = jsonObj.server;
 			obj.logDirectory = jsonObj.logDirectory;
 			obj.logProperties = jsonObj.logProperties;
+			obj.executionTime = jsonObj.executionTime;
 			obj.users = jsonObj.users;
 			obj.indicators = jsonObj.indicators;
 			
@@ -102,6 +103,8 @@ Ext.define('Nerif.component.Gerenciador', {
 			logProperties.push(rec);
 		});		
 		data.logProperties = logProperties;
+		
+		data.executionTime = this.executionTime;
 		
 		data.users = this.users;
 		data.indicators = this.indicators;

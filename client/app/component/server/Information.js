@@ -187,7 +187,7 @@
 			allowBlank: false,
 			listeners: {
 				'change': function(me, value) {
-					//todo
+					Gerenciador.executionTime = value ? Ext.Date.format(value, 'H:i') : null;
 				}
 			}
 		});
@@ -208,6 +208,10 @@
 							serverComboBox.setValue(Gerenciador.server);		
 							logDirectoryText.setValue(Gerenciador.logDirectory);
 
+							if(Gerenciador.executionTime) {
+								dataExecucaoField.setValue(Ext.Date.parse(Gerenciador.executionTime, 'H:i'));
+							}
+							
 							var logFormatRecords = [];
 							Ext.Array.forEach(Gerenciador.logProperties, function(rec) {
 								var idx = logFormatTag.getStore().findBy(function(format) {

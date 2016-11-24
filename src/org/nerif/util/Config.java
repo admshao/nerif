@@ -1,7 +1,7 @@
 package org.nerif.util;
 
-import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -69,14 +69,8 @@ public class Config {
 			+ "foi disparado hoje: %vezes%.";
 	
 	public static final Random RANDOM = new Random(System.nanoTime());
-	private static final URI URI_CONFIG = URI
-			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json"); // ESTAS LINHAS PARA ECLIPSE
-			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json"); // ESTAS LINHAS PARA BUILDS
-	
-	private static final URI URI_TRAINING = URI
-			.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json"); // ESTAS LINHAS PARA ECLIPSE
-			//.create("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json"); // ESTAS LINHAS PARA ECLIPSE
-	
+	private static URI URI_CONFIG;
+	private static URI URI_TRAINING;
 
 	public static String tipoServidor;
 	public static String caminhoLog;
@@ -86,7 +80,7 @@ public class Config {
 	public static HashMap<Integer, Indicador> indicadores = new HashMap<>();
 	public static HashMap<Integer, Grupo> grupos = new HashMap<>();
 
-	public static void initConfig(String[] args) throws IOException {
+	public static void initConfig(String[] args) throws Exception {
 		for (String arg : args) {
 			switch (arg) {
 			case "-e":
@@ -97,6 +91,14 @@ public class Config {
 			case "--modulo-analise":
 				EXECUTA_MODULO_ANALISE = true;
 				break;
+			case "-m":
+			case "--email":
+				EMAIL_ALERT = true;
+				break;
+			case "-s":
+			case "--sms":
+				SMS_ALERT = true;
+				break;
 			default:
 				break;
 			}
@@ -105,6 +107,12 @@ public class Config {
 		if (EXECUTA_MODULO_ANALISE && !EXECUTA_MODULO_ESTATISTICO) {
 			return;
 		}
+
+		URI_CONFIG = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
+		//URI_CONFIG = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json").toURI(); // ESTAS LINHAS PARA BUILDS
+		
+		URI_TRAINING = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
+		//URI_TRAINING = new URL("file://" + Paths.get("").toAbsolutePath().toString() + "/../client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
 		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
 		JsonElement cfgFileElement = GSON.fromJson(configString, JsonElement.class);

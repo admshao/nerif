@@ -1,7 +1,5 @@
 package org.nerif;
 
-import java.io.IOException;
-
 import org.nerif.parser.IISParser;
 import org.nerif.util.Config;
 
@@ -22,7 +20,7 @@ public class Main {
 				break;
 			}
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

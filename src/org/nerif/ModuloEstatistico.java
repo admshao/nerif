@@ -1,8 +1,8 @@
 package org.nerif;
 
 import java.util.HashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+
+import org.nerif.util.Config;
 
 public class ModuloEstatistico {
 
@@ -16,8 +16,6 @@ public class ModuloEstatistico {
 		return instance;
 	}
 
-	private final Lock lock = new ReentrantLock();
-
 	private ModuloEstatistico() {
 	}
 
@@ -26,35 +24,34 @@ public class ModuloEstatistico {
 	}
 
 	public void mesclaArquivo(final EstatisticaArquivo arquivo) {
-		lock.lock();
+		Config.lock.lock();
 
-		final HashMap<String, Long> getDataHoraQuantidadeEstatistica = estatisticaArquivo
-				.getDataHoraQuantidadeEstatistica();
-		arquivo.getDataHoraQuantidadeEstatistica().forEach((k, v) -> {
-			getDataHoraQuantidadeEstatistica.compute(k, (key, value) -> value == null ? v : value + v);
+		arquivo.getInfoPropriedadeMap().forEach((data, horaMap) -> {
+			horaMap.forEach((hora, map) -> {
+				map.forEach((chave, v) -> {
+					HashMap<String, HashMap<String, Long>> estatisticasDiaMap = estatisticaArquivo.getInfoPropriedadeMap().get(data);
+					if (estatisticasDiaMap == null) {
+						estatisticasDiaMap = new HashMap<>();
+						estatisticaArquivo.getInfoPropriedadeMap().put(data, estatisticasDiaMap);
+					}
+					HashMap<String, Long> estatisticaMap = estatisticasDiaMap.get(hora);
+					if (estatisticaMap == null) {
+						estatisticaMap = new HashMap<>();
+						estatisticasDiaMap.put(hora, estatisticaMap);
+					}
+					
+					if (chave.endsWith(";min")) {
+						estatisticaMap.compute(chave, (key, value) -> value == null || v < value ? v : value);
+					} else if (chave.endsWith(";max")) {
+						estatisticaMap.compute(chave, (key, value) -> value == null || v > value ? v : value);
+					} else {
+						estatisticaMap.compute(chave, (key, value) -> value == null ? v : value + v);
+					}
+				});
+			});
 		});
 
-		final HashMap<String, Long> getUrlDuracaoEstatistica = estatisticaArquivo.getUrlDuracaoEstatistica();
-		arquivo.getUrlDuracaoEstatistica().forEach((k, v) -> {
-			getUrlDuracaoEstatistica.compute(k, (key, value) -> value == null ? v : value + v);
-		});
-
-		final HashMap<String, Long> getUrlMaxEstatistica = estatisticaArquivo.getUrlMaxEstatistica();
-		arquivo.getUrlMaxEstatistica().forEach((k, v) -> {
-			getUrlMaxEstatistica.compute(k, (key, value) -> value == null || v > value ? v : value);
-		});
-
-		final HashMap<String, Long> getUrlMinEstatistica = estatisticaArquivo.getUrlMinEstatistica();
-		arquivo.getUrlMinEstatistica().forEach((k, v) -> {
-			getUrlMinEstatistica.compute(k, (key, value) -> value == null || v < value ? v : value);
-		});
-
-		final HashMap<String, Long> getUrlQuantidadeEstatistica = estatisticaArquivo.getUrlQuantidadeEstatistica();
-		arquivo.getUrlQuantidadeEstatistica().forEach((k, v) -> {
-			getUrlQuantidadeEstatistica.compute(k, (key, value) -> value == null ? v : value + v);
-		});
-
-		lock.unlock();
+		Config.lock.unlock();
 	}
 
 }

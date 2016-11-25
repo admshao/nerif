@@ -10,10 +10,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.nerif.gson.Gson;
 import org.nerif.gson.JsonArray;
@@ -39,6 +40,8 @@ public class Config {
 	public static boolean EXECUTA_MODULO_ESTATISTICO = false;
 	public static boolean EXECUTA_MODULO_ANALISE = false;
 	
+	public static final Lock lock = new ReentrantLock(true);
+	
 	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
 	public static final ConcurrentDateTimeFormat dfDataHora = new ConcurrentDateTimeFormat();
@@ -47,6 +50,9 @@ public class Config {
 	public static final Timer TIMER = new Timer();
 	public static volatile int activeThreads = 0;
 	
+	public static final String QUANTIDADE = "q";
+	public static final String MIN = "mi";
+	public static final String MAX = "ma";
 	public static final String BOM = "b";
 	public static final String RUIM = "r";
 	
@@ -68,9 +74,12 @@ public class Config {
 			+ " faz parte. Descricao do Indicador: %indicador%. Data e Hora da Deteccao: %data%. Numero de vezes que este alerta "
 			+ "foi disparado hoje: %vezes%.";
 	
-	public static final Random RANDOM = new Random(System.nanoTime());
-	private static URI URI_CONFIG;
-	private static URI URI_TRAINING;
+	public static String PATH_BASE_STRING;
+	public static URI URI_CONFIG;
+	public static URI URI_TRAINING;
+	public static String PATH_STATISTICS;
+	
+	public static final int MIN_INTERVALO_RELATORIO = 1;
 
 	public static String tipoServidor;
 	public static String caminhoLog;
@@ -108,11 +117,12 @@ public class Config {
 			return;
 		}
 
-		URI_CONFIG = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/client/config/config.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
-		//URI_CONFIG = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/config/config.json").toURI(); // ESTAS LINHAS PARA BUILDS
+		PATH_BASE_STRING = "file:///" + Paths.get("").toAbsolutePath().toString() + "/client/"; // ESTAS LINHAS PARA ECLIPSE
+		//PATH_BASE_STRING = "file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/"; // ESTAS LINHAS PARA BUILDS
 		
-		URI_TRAINING = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
-		//URI_TRAINING = new URL("file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/config/training.json").toURI(); // ESTAS LINHAS PARA ECLIPSE
+		URI_CONFIG = new URL(PATH_BASE_STRING + "config/config.json").toURI();
+		URI_TRAINING = new URL(PATH_BASE_STRING + "config/training.json").toURI();
+		PATH_STATISTICS = PATH_BASE_STRING + "statistics/";
 		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
 		JsonElement cfgFileElement = GSON.fromJson(configString, JsonElement.class);
@@ -125,6 +135,7 @@ public class Config {
 			String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");
 			EMAIL_USERNAME = emailSplit[0];
 			EMAIL_PASSWORD = emailSplit[1];
+			Email.getInstance();
 		}
 
 		if (SMS_ALERT) {
@@ -132,6 +143,7 @@ public class Config {
 			SMS_ACCOUNT_SID = smsSplit[0];
 			SMS_AUTH_TOKEN = smsSplit[1];
 			SMS_PHONE_NUMBER = smsSplit[2];
+			SMS.getInstance();
 		}
 
 		JsonArray logPropertiesArray = cfgFileObj.get("logProperties").getAsJsonArray();

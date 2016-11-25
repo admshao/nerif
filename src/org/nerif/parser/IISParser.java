@@ -66,10 +66,10 @@ public class IISParser {
 
 		@Override
 		public void run() {
-			final ModuloSimples moduloSimples = new ModuloSimples();
-			int lastIndex = 0;
-			HashMap<Integer, InfoPropriedade> translateMap = new HashMap<>();
 			try {
+				final ModuloSimples moduloSimples = new ModuloSimples();
+				int lastIndex = 0;
+				HashMap<Integer, InfoPropriedade> translateMap = new HashMap<>();
 				Iterator<String> iterator = Files.lines(f.toPath()).parallel().iterator();
 				while (iterator.hasNext()) {
 					String line = iterator.next();
@@ -100,10 +100,10 @@ public class IISParser {
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-
-			if (--Config.activeThreads == 0) {
-				Config.TIMER.cancel();
+			} finally {
+				if (--Config.activeThreads == 0) {
+					Config.TIMER.cancel();
+				}
 			}
 		}
 
@@ -119,9 +119,9 @@ public class IISParser {
 		@Override
 		public void run() {
 			final EstatisticaArquivo estatisticaArquivo = new EstatisticaArquivo();
-			int lastIndex = 0;
-			HashMap<Integer, InfoPropriedade> translateMap = new HashMap<>();
 			try {
+				int lastIndex = 0;
+				HashMap<Integer, InfoPropriedade> translateMap = new HashMap<>();
 				Iterator<String> iterator = Files.lines(f.toPath()).parallel().iterator();
 				while (iterator.hasNext()) {
 					String line = iterator.next();
@@ -150,13 +150,14 @@ public class IISParser {
 						}
 					}
 				}
+
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-
-			ModuloEstatistico.getInstance().mesclaArquivo(estatisticaArquivo);
-			if (--Config.activeThreads == 0) {
-				Config.TIMER.cancel();
+			} finally {
+				ModuloEstatistico.getInstance().mesclaArquivo(estatisticaArquivo);
+				if (--Config.activeThreads == 0) {
+					Config.TIMER.cancel();
+				}
 			}
 		}
 

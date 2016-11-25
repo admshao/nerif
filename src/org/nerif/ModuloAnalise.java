@@ -44,6 +44,8 @@ public class ModuloAnalise {
 			String url = coluns.get(InfoPropriedade.URL.name());
 			if (!urlJaVerificada.containsKey(url)) {
 				urlJaVerificada.put(url, new ArrayList<HashMap<String, String>>() {
+					private static final long serialVersionUID = 4550248614142415584L;
+
 					{
 						add(coluns);
 					}
@@ -55,7 +57,9 @@ public class ModuloAnalise {
 	}
 
 	public void dump() {
-		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
+		Config.lock.lock();
+		
+		/*EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
 		urlJaVerificada.forEach((k, v) -> {
 			String urlTempoMedio = String.valueOf(
 					estatisticas.getUrlDuracaoEstatistica().get(k) / estatisticas.getUrlQuantidadeEstatistica().get(k));
@@ -64,13 +68,13 @@ public class ModuloAnalise {
 				data.add(hash.values().stream().collect(Collectors.toList()));
 				result.add(Config.BOM);
 			});
-		});
+		});*/
 
 		tree = new DecisionTree(data, result);
 		tree.build();
 		tree.print();
 
-		System.out.println(tree.classify(new ArrayList<String>() {
+		/*System.out.println(tree.classify(new ArrayList<String>() {
 			private static final long serialVersionUID = -413906126211789308L;
 
 			{
@@ -91,7 +95,8 @@ public class ModuloAnalise {
 				add("/Admin.ww8/clientServerSync");
 				add("09:20:10");
 			}
-		}));
+		}));*/
 
+		Config.lock.unlock();
 	}
 }

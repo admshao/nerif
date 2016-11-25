@@ -1,16 +1,19 @@
 package org.nerif;
 
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.nerif.model.Alerta;
 import org.nerif.model.Indicador;
 import org.nerif.model.Usuario;
 import org.nerif.util.Config;
@@ -27,18 +30,29 @@ public class ModuloAlerta {
 		return instance;
 	}
 
-	private final Lock lock = new ReentrantLock(true);
-
-	private HashMap<Indicador, Long> indicadorQuantidadeAtivacoes = new HashMap<>();
-	private HashMap<Indicador, Boolean> alertarUsuario = new HashMap<>();
+	private HashMap<Indicador, Alerta> indicadorAlerta = new HashMap<>();
 
 	private ModuloAlerta() {
 	}
 
 	public void init() {
 		Config.indicadores.forEach((k, v) -> {
-			alertarUsuario.put(v, true);
+			indicadorAlerta.put(v, new Alerta());
 		});
+
+		if (Config.EXECUTA_MODULO_ESTATISTICO) {
+			disparaTimerRelatorio();
+		}
+	}
+
+	private void disparaTimerRelatorio() {
+		Config.TIMER.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				disparaTimerRelatorio();
+				gerarRelatorio();
+			}
+		}, Config.MIN_INTERVALO_RELATORIO * 60 * 1000);
 	}
 
 	public void notificaIndicadorAtivadoPorEmail(final List<String> to, final Indicador indicador,
@@ -52,16 +66,17 @@ public class ModuloAlerta {
 	}
 
 	public void indicadorAtivado(final Indicador indicador, final HashMap<String, String> cols) {
-		lock.lock();
-		indicadorQuantidadeAtivacoes.compute(indicador, (k, v) -> v == null ? 1l : v + 1);
+		Config.lock.lock();
+		final Alerta alerta = indicadorAlerta.get(indicador);
+		alerta.ativacoes++;
 
 		if (Config.EMAIL_ALERT || Config.SMS_ALERT) {
-			if (alertarUsuario.get(indicador)) {
-				alertarUsuario.put(indicador, false);
+			if (alerta.ativo) {
+				alerta.ativo = false;
 				Config.TIMER.schedule(new TimerTask() {
 					@Override
 					public void run() {
-						alertarUsuario.put(indicador, true);
+						alerta.ativo = true;
 					}
 				}, 30 * 60 * 1000);
 
@@ -82,7 +97,7 @@ public class ModuloAlerta {
 								});
 							});
 							String dataAgora = Config.dfDataHora.convertDateToString(new Date());
-							final String num = String.valueOf(indicadorQuantidadeAtivacoes.get(indicador));
+							final String num = String.valueOf(alerta.ativacoes);
 							if (Config.EMAIL_ALERT) {
 								notificaIndicadorAtivadoPorEmail(setEmail.stream().collect(Collectors.toList()),
 										indicador, dataAgora, num);
@@ -98,35 +113,59 @@ public class ModuloAlerta {
 				}).start();
 			}
 		}
-		lock.unlock();
+		Config.lock.unlock();
 	}
 
 	public void gerarRelatorio() {
-		if (Config.EXECUTA_MODULO_ESTATISTICO) {
-			EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
-			final HashMap<String, Long> urlQuantidade = estatisticas.getUrlQuantidadeEstatistica();
-			final HashMap<String, Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
+		Config.lock.lock();
 
-			String urlMax = urlQuantidade.keySet().parallelStream()
-					.max((entry1, entry2) -> urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 : -1).get();
+		/*
+		 * StringBuffer sb = new StringBuffer();
+		 * 
+		 * EstatisticaArquivo estatisticas =
+		 * ModuloEstatistico.getInstance().getEstatisticaArquivo(); final
+		 * HashMap<String, Long> urlQuantidade =
+		 * estatisticas.getUrlQuantidadeEstatistica(); final HashMap<String,
+		 * Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
+		 * 
+		 * if (!urlQuantidade.isEmpty()) { String urlMax =
+		 * urlQuantidade.keySet().parallelStream() .max((entry1, entry2) ->
+		 * urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 :
+		 * -1).get();
+		 * 
+		 * long totalUrlRequest = urlQuantidade.get(urlMax); sb.append("Url \""
+		 * + urlMax + "\" foi executada " + totalUrlRequest + " vezes.\n"); if
+		 * (urlDuracao.containsKey(urlMax)) { double urlTempoMedio =
+		 * urlDuracao.get(urlMax) / totalUrlRequest;
+		 * sb.append("Com tempo de resposta medio de -> " + urlTempoMedio +
+		 * "ms\n"); }
+		 * 
+		 * long totalRequest =
+		 * urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
+		 * sb.append("Numero total de requisicoes realizadas -> " + totalRequest
+		 * + "\n"); }
+		 * 
+		 * indicadorAlerta.forEach((indicador, alerta) -> {
+		 * sb.append("Indicador -> " + indicador.getDescricao() +
+		 * " foi ativado #: " + alerta.ativacoes + " vezes.\n"); });
+		 */
 
-			long totalRequest = urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
+		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
 
-			long totalUrlRequest = urlQuantidade.get(urlMax);
-			double urlTempoMedio = urlDuracao.get(urlMax) / totalUrlRequest;
-
-			System.out.println("Numero total de requisicoes realizadas -> " + totalRequest);
-			System.out.println("Url \"" + urlMax + "\" foi executada " + totalUrlRequest + " vezes.");
-			System.out.println("Com tempo de resposta medio de -> " + urlTempoMedio + "ms");
-		}
-
-		indicadorQuantidadeAtivacoes.forEach((chave, valor) -> {
-			System.out.println("Indicador -> " + chave.getDescricao() + " foi ativado #: "
-					+ indicadorQuantidadeAtivacoes.get(chave) + " vezes.");
+		estatisticas.getInfoPropriedadeMap().forEach((data, map) -> {
+			try {
+				Path p = Paths.get(new URL(Config.PATH_STATISTICS + data + ".json").toURI());
+				p.toFile().getParentFile().mkdirs();
+				Files.write(p, Config.GSON.toJson(map).getBytes());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		});
-		
+
 		if (Config.EXECUTA_MODULO_ANALISE) {
 			ModuloAnalise.getInstance().dump();
 		}
+
+		Config.lock.unlock();
 	}
 }

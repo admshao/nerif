@@ -1,6 +1,5 @@
 package org.nerif.model;
 
-import java.text.ParseException;
 import java.util.Date;
 
 import org.nerif.util.Config;
@@ -32,7 +31,7 @@ public class Regra {
 				if (valor2 != null) {
 					valorData2 = Config.dfData.convertStringToDate(valor2);
 				}
-			} catch (ParseException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			break;
@@ -42,7 +41,7 @@ public class Regra {
 				if (valor2 != null) {
 					valorData2 = Config.dfHora.convertStringToDate(valor2);
 				}
-			} catch (ParseException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			break;

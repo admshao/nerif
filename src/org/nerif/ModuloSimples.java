@@ -1,6 +1,5 @@
 package org.nerif;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -164,7 +163,7 @@ public class ModuloSimples {
 							default:
 								break;
 							}
-						} catch (ParseException e) {
+						} catch (Exception e) {
 							e.printStackTrace();
 						}
 						break;
@@ -207,7 +206,7 @@ public class ModuloSimples {
 							default:
 								break;
 							}
-						} catch (ParseException e) {
+						} catch (Exception e) {
 							e.printStackTrace();
 						}
 						break;

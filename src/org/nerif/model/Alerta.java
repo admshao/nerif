@@ -1,7 +1,11 @@
 package org.nerif.model;
 
 public class Alerta {
-	private boolean ativo;
-	private Indicador indicador;
-	private int ativacoes;
+	public boolean ativo;
+	public int ativacoes;
+	
+	public Alerta() {
+		ativo = true;
+		ativacoes = 0;
+	}
 }

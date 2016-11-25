@@ -2,14 +2,13 @@ package org.nerif;
 
 import org.nerif.parser.IISParser;
 import org.nerif.util.Config;
+import org.nerif.util.Email;
 
 public class Main {
 	public static void main(String[] args) {
 		try {
 			Config.initConfig(args);
 
-			//Email.getInstance();
-			//SMS.getInstance();
 			ModuloAlerta.getInstance().init();
 
 			switch (Config.tipoServidor) {
@@ -26,8 +25,9 @@ public class Main {
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				//Email.getInstance().close();
-				ModuloAlerta.getInstance().gerarRelatorio();
+				if (Config.EMAIL_ALERT) {
+					Email.getInstance().close();
+				}
 			}
 		});
 	}

@@ -47,6 +47,22 @@
 			"apache": "%i",
 			"nginx": "$i",
 			"iis": "time-taken"
+		},
+		{
+			"description": "Endereço IP do client que fez a requisição",
+			"infoPropriedade": "CLIENT_IP",
+			"tipoValor": "STRING",
+			"apache": "%ci",
+			"nginx": "$ci",
+			"iis": "c-ip"
+		},
+		{
+			"description": "Código da situação do Protocolo utilizado",
+			"infoPropriedade": "PROTOCOL_STATUS",
+			"tipoValor": "NUMERICO",
+			"apache": "%casi",
+			"nginx": "$casi",
+			"iis": "sc-status"
 		}
 	]
 }

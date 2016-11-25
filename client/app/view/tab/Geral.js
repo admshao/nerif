@@ -1,4 +1,6 @@
-﻿var exec = require('child_process').exec
+﻿var cp = require('child_process');
+var kill = require('tree-kill')
+var pid;
 
 Ext.define('Nerif.view.tab.Geral', {
     extend: 'Ext.form.Panel',
@@ -63,21 +65,13 @@ Ext.define('Nerif.view.tab.Geral', {
             formBind: true,
             text: 'Start',
             handler: function () {
-                /*Gerenciador.run(function(err) {
+                Gerenciador.run(function(err) {
 					if(err) {
 						Ext.Msg.alert('Erro', 'Ocorreu um erro ao salvar suas configurações');
 					} else {
-						//todo ?
+						pid = cp.exec('java -jar ../bin/Nerif.jar -a -e').pid;
 					}
-				});*/
-            	child = exec('java -jar ../bin/Nerif.jar -a -e',
-    			function(error, stdout, stderr) {
-					console.log('stdout: ' + stdout);
-					console.log('stderr: ' + stderr);
-					if (error !== null) {
-						console.log('exec error: ' + error);
-					}
-			});
+				});
             }
         });
 
@@ -89,5 +83,9 @@ Ext.define('Nerif.view.tab.Geral', {
         });
 
         this.callParent();
+        
+        window.onbeforeunload = function(event) {
+			kill(pid);
+        };
     }
 });

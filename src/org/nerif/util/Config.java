@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -79,8 +80,10 @@ public class Config {
 	public static URI URI_TRAINING;
 	public static String PATH_STATISTICS;
 	
-	public static final int MIN_INTERVALO_RELATORIO = 1;
+	public static final long MIN_INTERVALO_RELATORIO = 1;
+	public static final long INTERVALO_RELATORIO_GERAL = 24 * 60;
 
+	public static long horaRelatorioGeral;
 	public static String tipoServidor;
 	public static String caminhoLog;
 	
@@ -130,6 +133,15 @@ public class Config {
 
 		tipoServidor = cfgFileObj.get("server").getAsString();
 		caminhoLog = cfgFileObj.get("logDirectory").getAsString();
+		 
+		Date agora = new Date();
+		String[] splitHora = cfgFileObj.get("executionTime").getAsString().split(":");
+		long hora = Long.valueOf(splitHora[0]);
+		long minuto = Long.valueOf(splitHora[1]);
+
+		long msAgora = agora.getHours() * 60 * 60 * 1000 + agora.getMinutes() * 60 * 1000 + agora.getSeconds() * 1000;
+		long msExecucao = hora * 60 * 60 * 1000 + minuto * 60 * 1000;
+		horaRelatorioGeral = msExecucao - msAgora + msAgora > msExecucao ? 24 * 60 * 60 * 1000 : 0;
 
 		if (EMAIL_ALERT) {
 			String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");

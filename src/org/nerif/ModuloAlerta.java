@@ -43,6 +43,18 @@ public class ModuloAlerta {
 		if (Config.EXECUTA_MODULO_ESTATISTICO) {
 			disparaTimerRelatorio();
 		}
+		
+		disparaTimerGeral(Config.horaRelatorioGeral);
+	}
+	
+	private void disparaTimerGeral(long tempo) {
+		Config.TIMER.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				disparaTimerGeral(Config.INTERVALO_RELATORIO_GERAL * 60 * 1000);
+				gerarRelatorioGeral();
+			}
+		}, tempo);
 	}
 
 	private void disparaTimerRelatorio() {
@@ -50,7 +62,7 @@ public class ModuloAlerta {
 			@Override
 			public void run() {
 				disparaTimerRelatorio();
-				gerarRelatorio();
+				gerarRelatorioEstatistico();
 			}
 		}, Config.MIN_INTERVALO_RELATORIO * 60 * 1000);
 	}
@@ -115,10 +127,9 @@ public class ModuloAlerta {
 		}
 		Config.lock.unlock();
 	}
-
-	public void gerarRelatorio() {
+	
+	public void gerarRelatorioGeral() {
 		Config.lock.lock();
-
 		/*
 		 * StringBuffer sb = new StringBuffer();
 		 * 
@@ -150,6 +161,16 @@ public class ModuloAlerta {
 		 * " foi ativado #: " + alerta.ativacoes + " vezes.\n"); });
 		 */
 
+		if (Config.EXECUTA_MODULO_ANALISE) {
+			ModuloAnalise.getInstance().dump();
+		}
+
+		Config.lock.unlock();
+	}
+
+	public void gerarRelatorioEstatistico() {
+		Config.lock.lock();
+
 		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
 
 		estatisticas.getInfoPropriedadeMap().forEach((data, map) -> {
@@ -161,10 +182,6 @@ public class ModuloAlerta {
 				e.printStackTrace();
 			}
 		});
-
-		if (Config.EXECUTA_MODULO_ANALISE) {
-			ModuloAnalise.getInstance().dump();
-		}
 
 		Config.lock.unlock();
 	}

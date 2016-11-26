@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +32,7 @@ public class ModuloAlerta {
 		return instance;
 	}
 
+	public static final Lock lock = new ReentrantLock(true);
 	private HashMap<Indicador, Alerta> indicadorAlerta = new HashMap<>();
 
 	private ModuloAlerta() {
@@ -43,10 +46,10 @@ public class ModuloAlerta {
 		if (Config.EXECUTA_MODULO_ESTATISTICO) {
 			disparaTimerRelatorio();
 		}
-		
+
 		disparaTimerGeral(Config.horaRelatorioGeral);
 	}
-	
+
 	private void disparaTimerGeral(long tempo) {
 		Config.TIMER.schedule(new TimerTask() {
 			@Override
@@ -78,7 +81,7 @@ public class ModuloAlerta {
 	}
 
 	public void indicadorAtivado(final Indicador indicador, final HashMap<String, String> cols) {
-		Config.lock.lock();
+		lock.lock();
 		final Alerta alerta = indicadorAlerta.get(indicador);
 		alerta.ativacoes++;
 
@@ -125,45 +128,42 @@ public class ModuloAlerta {
 				}).start();
 			}
 		}
-		Config.lock.unlock();
+		lock.unlock();
 	}
-	
+
 	public void gerarRelatorioGeral() {
 		Config.lock.lock();
-		/*
-		 * StringBuffer sb = new StringBuffer();
-		 * 
-		 * EstatisticaArquivo estatisticas =
-		 * ModuloEstatistico.getInstance().getEstatisticaArquivo(); final
-		 * HashMap<String, Long> urlQuantidade =
-		 * estatisticas.getUrlQuantidadeEstatistica(); final HashMap<String,
-		 * Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
-		 * 
-		 * if (!urlQuantidade.isEmpty()) { String urlMax =
-		 * urlQuantidade.keySet().parallelStream() .max((entry1, entry2) ->
-		 * urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 :
-		 * -1).get();
-		 * 
-		 * long totalUrlRequest = urlQuantidade.get(urlMax); sb.append("Url \""
-		 * + urlMax + "\" foi executada " + totalUrlRequest + " vezes.\n"); if
-		 * (urlDuracao.containsKey(urlMax)) { double urlTempoMedio =
-		 * urlDuracao.get(urlMax) / totalUrlRequest;
-		 * sb.append("Com tempo de resposta medio de -> " + urlTempoMedio +
-		 * "ms\n"); }
-		 * 
-		 * long totalRequest =
-		 * urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
-		 * sb.append("Numero total de requisicoes realizadas -> " + totalRequest
-		 * + "\n"); }
-		 * 
-		 * indicadorAlerta.forEach((indicador, alerta) -> {
-		 * sb.append("Indicador -> " + indicador.getDescricao() +
-		 * " foi ativado #: " + alerta.ativacoes + " vezes.\n"); });
-		 */
+
+		StringBuffer sb = new StringBuffer();
+
+		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticasURL();
+		final HashMap<String, Long> urlQuantidade = estatisticas.getUrlQuantidadeEstatistica();
+		final HashMap<String, Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
+
+		if (!urlQuantidade.isEmpty()) {
+			String urlMax = urlQuantidade.keySet().parallelStream()
+					.max((entry1, entry2) -> urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 : -1).get();
+
+			long totalUrlRequest = urlQuantidade.get(urlMax);
+			sb.append("Url \"" + urlMax + "\" foi executada " + totalUrlRequest + " vezes.\n");
+			if (urlDuracao.containsKey(urlMax)) {
+				double urlTempoMedio = urlDuracao.get(urlMax) / totalUrlRequest;
+				sb.append("Com tempo de resposta medio de -> " + urlTempoMedio + "ms\n");
+			}
+
+			long totalRequest = urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
+			sb.append("Numero total de requisicoes realizadas -> " + totalRequest + "\n");
+		}
+
+		indicadorAlerta.forEach((indicador, alerta) -> {
+			sb.append("Indicador -> " + indicador.getDescricao() + " foi ativado #: " + alerta.ativacoes + " vezes.\n");
+		});
 
 		if (Config.EXECUTA_MODULO_ANALISE) {
-			ModuloAnalise.getInstance().dump();
+			ModuloAnalise.getInstance().gerarRelatorio();
 		}
+		
+		System.out.println(sb.toString());
 
 		Config.lock.unlock();
 	}
@@ -171,9 +171,9 @@ public class ModuloAlerta {
 	public void gerarRelatorioEstatistico() {
 		Config.lock.lock();
 
-		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
+		HashMap<String, EstatisticaArquivo> estatisticas = ModuloEstatistico.getInstance().getEstatisticasHistoricas();
 
-		estatisticas.getInfoPropriedadeMap().forEach((data, map) -> {
+		estatisticas.forEach((data, map) -> {
 			try {
 				Path p = Paths.get(new URL(Config.PATH_STATISTICS + data + ".json").toURI());
 				p.toFile().getParentFile().mkdirs();

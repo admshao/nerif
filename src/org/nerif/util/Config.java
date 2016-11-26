@@ -24,6 +24,7 @@ import org.nerif.gson.JsonObject;
 import org.nerif.model.ConcurrentDateFormat;
 import org.nerif.model.ConcurrentDateTimeFormat;
 import org.nerif.model.ConcurrentTimeFormat;
+import org.nerif.model.ConjuntoTreinamentoArvore;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.Grupo;
 import org.nerif.model.Indicador;
@@ -40,6 +41,8 @@ public class Config {
 	
 	public static boolean EXECUTA_MODULO_ESTATISTICO = false;
 	public static boolean EXECUTA_MODULO_ANALISE = false;
+	
+	public static boolean initTree = false;
 	
 	public static final Lock lock = new ReentrantLock(true);
 	
@@ -80,9 +83,11 @@ public class Config {
 	public static URI URI_TRAINING;
 	public static String PATH_STATISTICS;
 	
-	public static final long MIN_INTERVALO_RELATORIO = 1;
+	public static final long MIN_INTERVALO_RELATORIO = 15;
 	public static final long INTERVALO_RELATORIO_GERAL = 24 * 60;
 
+	public static ConjuntoTreinamentoArvore conjuntoTreinamento = new ConjuntoTreinamentoArvore();
+	
 	public static long horaRelatorioGeral;
 	public static String tipoServidor;
 	public static String caminhoLog;
@@ -141,7 +146,7 @@ public class Config {
 
 		long msAgora = agora.getHours() * 60 * 60 * 1000 + agora.getMinutes() * 60 * 1000 + agora.getSeconds() * 1000;
 		long msExecucao = hora * 60 * 60 * 1000 + minuto * 60 * 1000;
-		horaRelatorioGeral = msExecucao - msAgora + msAgora > msExecucao ? 24 * 60 * 60 * 1000 : 0;
+		horaRelatorioGeral = msExecucao - msAgora + (msAgora > msExecucao ? 24 * 60 * 60 * 1000 : 0);
 
 		if (EMAIL_ALERT) {
 			String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");
@@ -229,10 +234,8 @@ public class Config {
 		if (EXECUTA_MODULO_ANALISE) {
 			if (Paths.get(URI_TRAINING).toFile().exists()) {
 				String trainingString = new String(Files.readAllBytes(Paths.get(URI_TRAINING)), CHARSET);
-				JsonElement trainingFileElement = GSON.fromJson(trainingString, JsonElement.class);
-				JsonObject trainingFileObj = trainingFileElement.getAsJsonObject();
-			} else {
-				System.out.println("Training does not exists.");
+				conjuntoTreinamento = GSON.fromJson(trainingString, ConjuntoTreinamentoArvore.class);
+				initTree = true;
 			}
 		}
 	}

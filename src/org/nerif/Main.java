@@ -28,6 +28,7 @@ public class Main {
 				if (Config.EMAIL_ALERT) {
 					Email.getInstance().close();
 				}
+				ModuloAlerta.getInstance().gerarRelatorioGeral();
 			}
 		});
 	}

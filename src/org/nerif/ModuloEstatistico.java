@@ -6,8 +6,9 @@ import org.nerif.util.Config;
 
 public class ModuloEstatistico {
 
-	private EstatisticaArquivo estatisticaArquivo = new EstatisticaArquivo();
-
+	private HashMap<String, EstatisticaArquivo> estatisticasHistoricas = new HashMap<>();
+	private EstatisticaArquivo estatisticasURL = new EstatisticaArquivo();
+	
 	private static ModuloEstatistico instance = null;
 
 	public static ModuloEstatistico getInstance() {
@@ -19,36 +20,42 @@ public class ModuloEstatistico {
 	private ModuloEstatistico() {
 	}
 
-	public EstatisticaArquivo getEstatisticaArquivo() {
-		return estatisticaArquivo;
+	public HashMap<String, EstatisticaArquivo> getEstatisticasHistoricas() {
+		return estatisticasHistoricas;
+	}
+	
+	public EstatisticaArquivo getEstatisticasURL() {
+		return estatisticasURL;
 	}
 
 	public void mesclaArquivo(final EstatisticaArquivo arquivo) {
 		Config.lock.lock();
 
-		arquivo.getInfoPropriedadeMap().forEach((data, horaMap) -> {
-			horaMap.forEach((hora, map) -> {
-				map.forEach((chave, v) -> {
-					HashMap<String, HashMap<String, Long>> estatisticasDiaMap = estatisticaArquivo.getInfoPropriedadeMap().get(data);
-					if (estatisticasDiaMap == null) {
-						estatisticasDiaMap = new HashMap<>();
-						estatisticaArquivo.getInfoPropriedadeMap().put(data, estatisticasDiaMap);
-					}
-					HashMap<String, Long> estatisticaMap = estatisticasDiaMap.get(hora);
-					if (estatisticaMap == null) {
-						estatisticaMap = new HashMap<>();
-						estatisticasDiaMap.put(hora, estatisticaMap);
-					}
-					
-					if (chave.endsWith(";min")) {
-						estatisticaMap.compute(chave, (key, value) -> value == null || v < value ? v : value);
-					} else if (chave.endsWith(";max")) {
-						estatisticaMap.compute(chave, (key, value) -> value == null || v > value ? v : value);
-					} else {
-						estatisticaMap.compute(chave, (key, value) -> value == null ? v : value + v);
-					}
-				});
-			});
+		estatisticasHistoricas.put(arquivo.getDia(), arquivo);
+
+		final HashMap<String, Long> getDataHoraQuantidadeEstatistica = estatisticasURL.getDataHoraQuantidadeEstatistica();
+		arquivo.getDataHoraQuantidadeEstatistica().forEach((k, v) -> {
+			getDataHoraQuantidadeEstatistica.compute(k, (key, value) -> value == null ? v : value + v);
+		});
+
+		final HashMap<String, Long> getUrlDuracaoEstatistica = estatisticasURL.getUrlDuracaoEstatistica();
+		arquivo.getUrlDuracaoEstatistica().forEach((k, v) -> {
+			getUrlDuracaoEstatistica.compute(k, (key, value) -> value == null ? v : value + v);
+		});
+
+		final HashMap<String, Long> getUrlMaxEstatistica = estatisticasURL.getUrlMaxEstatistica();
+		arquivo.getUrlMaxEstatistica().forEach((k, v) -> {
+			getUrlMaxEstatistica.compute(k, (key, value) -> value == null || v > value ? v : value);
+		});
+
+		final HashMap<String, Long> getUrlMinEstatistica = estatisticasURL.getUrlMinEstatistica();
+		arquivo.getUrlMinEstatistica().forEach((k, v) -> {
+			getUrlMinEstatistica.compute(k, (key, value) -> value == null || v < value ? v : value);
+		});
+
+		final HashMap<String, Long> getUrlQuantidadeEstatistica = estatisticasURL.getUrlQuantidadeEstatistica();
+		arquivo.getUrlQuantidadeEstatistica().forEach((k, v) -> {
+			getUrlQuantidadeEstatistica.compute(k, (key, value) -> value == null ? v : value + v);
 		});
 
 		Config.lock.unlock();

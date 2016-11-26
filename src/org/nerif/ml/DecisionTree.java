@@ -9,37 +9,22 @@ import org.nerif.util.Config;
 @SuppressWarnings("serial")
 public class DecisionTree {
 
-	private List<List<String>> data;
-	private List<String> result;
 	private DecisionNode tree;
+	private HashMap<Integer, Double> rowEntropy;
+	private HashMap<Integer, HashMap<String, Long>> rowUniques;
+	private HashMap<String, List<List<List<String>>>> rowDividedSets;
 
-	private static HashMap<Integer, Double> rowEntropy;
-	private static HashMap<Integer, HashMap<String, Long>> rowUniques;
-	private static HashMap<String, List<List<List<String>>>> rowDividedSets;
-
-	public DecisionTree(List<List<String>> data, List<String> result) {
-		this.tree = null;
-		this.data = data;
-		this.result = result;
+	public DecisionTree(final List<List<String>> rows) {
 		rowEntropy = new HashMap<>();
 		rowUniques = new HashMap<>();
 		rowDividedSets = new HashMap<>();
+		this.tree = buildTree(rows);
 	}
 
 	public void print() {
 		if (tree != null) {
 			tree.print();
 		}
-	}
-
-	public DecisionNode build() {
-		final List<List<String>> rows = new ArrayList<>();
-		for (int i = 0; i != data.size(); i++) {
-			data.get(i).add(result.get(i));
-			rows.add(data.get(i));
-		}
-		tree = buildTree(rows);
-		return tree;
 	}
 
 	public void prune(final double mingain) {
@@ -199,7 +184,7 @@ public class DecisionTree {
 	}
 
 	public List<List<List<String>>> divideSet(final List<List<String>> rows, final int col, final String value) {
-		final String rowHash = col + ";" + value;
+		final String rowHash = rows.hashCode() + ";" + col + ";" + value;
 		if (rowDividedSets.containsKey(rowHash))
 			return rowDividedSets.get(rowHash);
 		List<List<List<String>>> sets = new ArrayList<List<List<String>>>() {

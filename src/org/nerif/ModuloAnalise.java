@@ -1,24 +1,23 @@
 package org.nerif;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.nerif.ml.DecisionTree;
+import org.nerif.model.ConjuntoTreinamentoArvore;
+import org.nerif.model.FormatoLog;
 import org.nerif.model.InfoPropriedade;
 import org.nerif.util.Config;
 
 public class ModuloAnalise {
 
 	private static ModuloAnalise instance = null;
-
-	private HashMap<String, List<HashMap<String, String>>> urlJaVerificada = new HashMap<>();
-	private HashMap<String, HashMap<String, String>> linhasNaoClassificadas = new HashMap<>();
-	private List<List<String>> data;
-	private List<String> result;
-
-	private DecisionTree tree;
+	private ConjuntoTreinamentoArvore conjuntoTreinamento = null;
+	private DecisionTree tree = null;
 
 	public static ModuloAnalise getInstance() {
 		if (instance == null)
@@ -27,76 +26,96 @@ public class ModuloAnalise {
 	}
 
 	private ModuloAnalise() {
-		data = new ArrayList<>();
-		result = new ArrayList<>();
-	}
-
-	public void processaLinha(final HashMap<String, String> coluns, final boolean indicadorAtivado) {
-		/*
-		 * String url = coluns.get(InfoPropriedade.URL.name()); if
-		 * (!urlJaVerificada.containsKey(url)) { if (indicadorAtivado) {
-		 * data.add(coluns.values().stream().collect(Collectors.toList()));
-		 * result.add(Config.RUIM); urlJaVerificada.put(url, coluns); } }
-		 */
-		if (indicadorAtivado) {
-			data.add(coluns.values().stream().collect(Collectors.toList()));
-			result.add(Config.RUIM);
-			String url = coluns.get(InfoPropriedade.URL.name());
-			if (!urlJaVerificada.containsKey(url)) {
-				urlJaVerificada.put(url, new ArrayList<HashMap<String, String>>() {
-					private static final long serialVersionUID = 4550248614142415584L;
-
-					{
-						add(coluns);
-					}
-				});
-			} else {
-				urlJaVerificada.get(url).add(coluns);
-			}
+		if (Config.initTree) {
+			conjuntoTreinamento = Config.conjuntoTreinamento;
+			List<List<String>> rows = preparaLinhasArvore(null);
+			tree = new DecisionTree(rows);
+		} else {
+			conjuntoTreinamento = new ConjuntoTreinamentoArvore();
 		}
 	}
 
-	public void dump() {
-		Config.lock.lock();
-		
-		/*EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticaArquivo();
-		urlJaVerificada.forEach((k, v) -> {
-			String urlTempoMedio = String.valueOf(
-					estatisticas.getUrlDuracaoEstatistica().get(k) / estatisticas.getUrlQuantidadeEstatistica().get(k));
-			v.forEach(hash -> {
-				hash.put(InfoPropriedade.TEMPO.name(), urlTempoMedio);
-				data.add(hash.values().stream().collect(Collectors.toList()));
-				result.add(Config.BOM);
-			});
-		});*/
+	public void processaLinha(final HashMap<String, String> coluns, final boolean indicadorAtivado) {
+		if (indicadorAtivado) {
+			String url = coluns.get(InfoPropriedade.URL.name());
+			if (!conjuntoTreinamento.urlVerificada.containsKey(url)) {
+				HashMap<String, HashMap<String, String>> maps = new HashMap<>();
+				maps.put(Config.RUIM, coluns);
+				conjuntoTreinamento.urlVerificada.put(url, maps);
+			}
+			conjuntoTreinamento.urlQuantidade.compute(url, (k, v) -> v == null ? 1l : v + 1);
+			long tempo = Long.valueOf(coluns.get(InfoPropriedade.TEMPO.name()));
+			conjuntoTreinamento.urlMedia.compute(url, (k, v) -> v == null ? tempo : v + tempo);
+		}
 
-		tree = new DecisionTree(data, result);
-		tree.build();
+		if (tree != null) {
+
+		}
+	}
+
+	public void gerarRelatorio() {
+		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticasURL();
+
+		List<List<String>> rows = preparaLinhasArvore(estatisticas);
+
+		try {
+			Path p = Paths.get(Config.URI_TRAINING);
+			Files.write(p, Config.GSON.toJson(conjuntoTreinamento).getBytes());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		long start = System.nanoTime();
+		tree = new DecisionTree(rows);
+		long total = System.nanoTime() - start;
+		System.out.println("Nano -> " + total);
+		System.out.println("Seila -> " + total / 1000);
+		System.out.println("milis -> " + total / 1000000);
+		System.out.println("segundos -> " + total / 1000000000);
 		tree.print();
+	}
 
-		/*System.out.println(tree.classify(new ArrayList<String>() {
-			private static final long serialVersionUID = -413906126211789308L;
+	private List<List<String>> preparaLinhasArvore(EstatisticaArquivo estatisticas) {
+		List<List<String>> rows = new ArrayList<>();
 
-			{
-				add("25000");
-				add("8000");
-				add("2016-02-29");
-				add("/Admin.ww8/clientServerSync");
-				add("10:50:40");
+		conjuntoTreinamento.urlVerificada.forEach((k, v) -> {
+			List<String> data = new ArrayList<>();
+			HashMap<String, String> mapRuim = v.get(Config.RUIM);
+			HashMap<String, String> mapBom = v.get(Config.BOM);
+
+			for (FormatoLog formato : Config.colunasLog) {
+				data.add(mapRuim.get(formato.getInfoPropriedade().name()));
 			}
-		}));
-		System.out.println(tree.classify(new ArrayList<String>() {
-			private static final long serialVersionUID = -413906126211789308L;
+			data.add(Config.RUIM);
+			rows.add(data);
 
-			{
-				add("5000000");
-				add("8000");
-				add("2016-02-29");
-				add("/Admin.ww8/clientServerSync");
-				add("09:20:10");
+			if (mapBom != null) {
+				for (FormatoLog formato : Config.colunasLog) {
+					data.add(mapBom.get(formato.getInfoPropriedade().name()));
+				}
+				data.add(Config.BOM);
+				rows.add(data);
+			} else if (estatisticas != null) {
+				mapBom = new HashMap<>();
+
+				String urlTempoMedio = String.valueOf(estatisticas.getUrlDuracaoEstatistica().get(k)
+						/ estatisticas.getUrlQuantidadeEstatistica().get(k));
+
+				for (FormatoLog formato : Config.colunasLog) {
+					if (formato.getInfoPropriedade().name().equals(InfoPropriedade.TEMPO.name())) {
+						mapBom.put(formato.getInfoPropriedade().name(), urlTempoMedio);
+					} else {
+						mapBom.put(formato.getInfoPropriedade().name(),
+								mapRuim.get(formato.getInfoPropriedade().name()));
+					}
+
+					data.add(mapBom.get(formato.getInfoPropriedade().name()));
+				}
+
+				data.add(Config.BOM);
+				rows.add(data);
 			}
-		}));*/
-
-		Config.lock.unlock();
+		});
+		return rows;
 	}
 }

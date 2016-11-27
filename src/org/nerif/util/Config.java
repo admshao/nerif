@@ -97,6 +97,7 @@ public class Config {
 	public static HashMap<Integer, Indicador> indicadores = new HashMap<>();
 	public static HashMap<Integer, Grupo> grupos = new HashMap<>();
 
+	@SuppressWarnings("deprecation")
 	public static void initConfig(String[] args) throws Exception {
 		for (String arg : args) {
 			switch (arg) {

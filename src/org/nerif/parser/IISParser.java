@@ -7,11 +7,11 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.nerif.EstatisticaArquivo;
-import org.nerif.ModuloEstatistico;
-import org.nerif.ModuloSimples;
+import org.nerif.estatistica.EstatisticaArquivo;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.InfoPropriedade;
+import org.nerif.modulos.ModuloEstatistico;
+import org.nerif.modulos.ModuloSimples;
 import org.nerif.util.Config;
 
 public class IISParser {

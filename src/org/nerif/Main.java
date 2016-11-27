@@ -1,5 +1,7 @@
 package org.nerif;
 
+import org.nerif.modulos.ModuloAlerta;
+import org.nerif.modulos.ModuloAnalise;
 import org.nerif.parser.IISParser;
 import org.nerif.util.Config;
 import org.nerif.util.Email;
@@ -10,6 +12,7 @@ public class Main {
 			Config.initConfig(args);
 
 			ModuloAlerta.getInstance().init();
+			ModuloAnalise.getInstance();
 
 			switch (Config.tipoServidor) {
 			case "iis":
@@ -28,7 +31,6 @@ public class Main {
 				if (Config.EMAIL_ALERT) {
 					Email.getInstance().close();
 				}
-				ModuloAlerta.getInstance().gerarRelatorioGeral();
 			}
 		});
 	}

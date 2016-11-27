@@ -1,4 +1,4 @@
-package org.nerif;
+package org.nerif.modulos;
 
 import java.util.ArrayList;
 import java.util.Date;

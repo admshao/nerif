@@ -1,4 +1,4 @@
-package org.nerif;
+package org.nerif.modulos;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.nerif.estatistica.EstatisticaArquivo;
 import org.nerif.model.Alerta;
 import org.nerif.model.Indicador;
 import org.nerif.model.Usuario;
@@ -136,9 +137,9 @@ public class ModuloAlerta {
 
 		StringBuffer sb = new StringBuffer();
 
-		EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticasURL();
-		final HashMap<String, Long> urlQuantidade = estatisticas.getUrlQuantidadeEstatistica();
-		final HashMap<String, Long> urlDuracao = estatisticas.getUrlDuracaoEstatistica();
+		final EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticasURL();
+		final HashMap<String, Long> urlQuantidade = estatisticas.getEstatisticasAnalise().getUrlQuantidadeEstatistica();
+		final HashMap<String, Long> urlDuracao = estatisticas.getEstatisticasAnalise().getUrlDuracaoEstatistica();
 
 		if (!urlQuantidade.isEmpty()) {
 			String urlMax = urlQuantidade.keySet().parallelStream()
@@ -159,11 +160,11 @@ public class ModuloAlerta {
 			sb.append("Indicador -> " + indicador.getDescricao() + " foi ativado #: " + alerta.ativacoes + " vezes.\n");
 		});
 
-		if (Config.EXECUTA_MODULO_ANALISE) {
-			ModuloAnalise.getInstance().gerarRelatorio();
-		}
-		
 		System.out.println(sb.toString());
+		
+		if (Config.EXECUTA_MODULO_ANALISE) {
+			ModuloAnalise.getInstance().gerarRelatorio(estatisticas);
+		}
 
 		Config.lock.unlock();
 	}
@@ -172,12 +173,11 @@ public class ModuloAlerta {
 		Config.lock.lock();
 
 		HashMap<String, EstatisticaArquivo> estatisticas = ModuloEstatistico.getInstance().getEstatisticasHistoricas();
-
 		estatisticas.forEach((data, map) -> {
 			try {
 				Path p = Paths.get(new URL(Config.PATH_STATISTICS + data + ".json").toURI());
 				p.toFile().getParentFile().mkdirs();
-				Files.write(p, Config.GSON.toJson(map).getBytes());
+				Files.write(p, Config.GSON.toJson(map.getEstatisticasDia().get(data)).getBytes());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

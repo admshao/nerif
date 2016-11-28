@@ -10,7 +10,10 @@ Ext.define('Nerif.view.tab.Estatistica', {
     
     initComponent: function() {
     	var obj = this;
-    	      	
+    	
+    	var lastModifiedTime = null;
+    	var statisticData = null;
+    	
     	var totalRequisicoesHora = function(dados, filtro) {
     		
     		var reqHora = {};
@@ -128,6 +131,7 @@ Ext.define('Nerif.view.tab.Estatistica', {
 					type: 'bar',
 					xField: 'extensao',
 					yField: 'quantidade',
+					selectionTolerance: 5,
 					tooltip: {
 						trackMouse: true,
 						width: 175,
@@ -280,6 +284,88 @@ Ext.define('Nerif.view.tab.Estatistica', {
     		
     	};
     	
+    	var tempoPorUrlPorHora = function(dados, filtro) {
+    		
+    		var data = [];
+    		
+    		for(var key in dados.requisicoes) {
+    			if(filtro && key.indexOf(filtro) === -1)
+    				continue;
+    			
+    			var tempoMin = dados.requisicoes[key].tempoMin;
+    			var tempoMax = dados.requisicoes[key].tempoMax;
+    			
+    			var horarios = dados.requisicoes[key].horarios;    			   			
+    			for(var horario in horarios) {
+    				
+    				var tempoMedio = Ext.Array.sum(Ext.Array.pluck(horarios[horario].linhas, 'duracao')) / horarios[horario].linhas.length;
+    				
+    				data.push({
+    					url: key,
+    					horario: horario,
+    					tempoMin: tempoMin,
+    					tempoMax: tempoMax,
+    					tempoMedio: tempoMedio
+    				});
+    				
+    			}    			
+    		}
+    		
+    		centerPanel.add({    			
+    			xtype: 'cartesian',
+    			insetPadding: 40,
+				store: {
+					fields: ['url', 'horario', 'tempoMin', 'tempoMax', 'tempoMedio'],
+					data: data
+				},
+				axes: [{
+					type: 'numeric',
+					position: 'left',
+					fields: ['tempoMin', 'tempoMax', 'tempoMedio'],
+					grid: true,
+					minimum: 0
+				}, {
+					type: 'category',
+					position: 'bottom',
+					fields: ['horario']
+				}],
+				series: [{
+					type: 'line',
+					style: {
+						stroke: 'red',
+						lineWidth: 2
+					},
+					xField: 'horario',
+					yField: 'tempoMax'
+				}, {
+					type: 'line',
+					style: {
+						stroke: 'green',
+						lineWidth: 2
+					},
+					xField: 'horario',
+					yField: 'tempoMin'
+				}, {
+					type: 'line',
+					style: {
+						stroke: 'blue',
+						lineWidth: 2
+					},
+					xField: 'horario',
+					yField: 'tempoMedio',
+                    selectionTolerance: 5,
+					tooltip: {
+						width: 175,					
+						trackMouse: true,						
+						renderer: function (toolTip, record, ctx) {
+							toolTip.setHtml('Tempo médio de requisições em ' + record.get('horario') + ': ' + record.get('tempoMedio'));
+						}
+					}
+				}]
+    		});
+    		
+    	};
+    	
     	var gerarGrafico = function() {
     		var data = datasComEstatisticaCombo.getValue();
     		var opcao = opcoesCombo.getValue();
@@ -292,19 +378,9 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			centerPanel.update('<center><div><strong>Selecione uma data e uma opção<strong></div></center>');
     		} else {
     			
-    			if (fs.existsSync('./statistics/'+ Ext.Date.format(data, 'Y-m-d') + '.json')) {
-    				
-    				centerPanel.body.mask('Carregando');
-    				
-    				fs.readFile('./statistics/'+ Ext.Date.format(data, 'Y-m-d') + '.json', "utf8", function (err, dados) {
-    					var jsonObj = Ext.decode(dados);
-    					console.log(jsonObj);
+    			if (statisticData) {    					
+					eval(opcao)(statisticData, filtro);  								
     					
-    					eval(opcao)(jsonObj, filtro);   								
-    					
-    					centerPanel.body.unmask();
-			        });
-        			
         		} else {
         			centerPanel.update('<center><div><strong>Não existem dados para a data escolhida<strong></div></center>');	
         		}    			
@@ -330,7 +406,31 @@ Ext.define('Nerif.view.tab.Estatistica', {
     		displayField: 'dataFormatada',
     		editable: false,
     		queryMode: 'local',
-    		allowBlank: false
+    		allowBlank: false,
+    		listeners: {
+    			'change': function(me, value) {
+    				if(!value) {
+    					lastModifiedTime = null;
+    					statisticData = null;
+    				} else {
+    				
+	    				var path = './statistics/'+ Ext.Date.format(value, 'Y-m-d') + '.json';
+	    				if (fs.existsSync(path)) {
+	    					
+	    					var stat = fs.statSync(path);	    					
+	    					if(lastModifiedTime && lastModifiedTime === stat.mtime) {
+	    						return;
+	    					}
+	    					
+	    					lastModifiedTime = stat.mtime;
+	    					
+	    					fs.readFile(path, "utf8", function (err, dados) {
+	    						statisticData = Ext.decode(dados);
+	    					});	    					
+	    				}
+    				}
+    			}
+    		}
     	});
     	
     	var opcoesStore = Ext.create('Ext.data.Store', {
@@ -340,6 +440,7 @@ Ext.define('Nerif.view.tab.Estatistica', {
     	        { "valor": "totalExtensoes", "descricao": "Total de requisições por extensão de arquivo" },
     	        { "valor": "totalIP", "descricao": "Total de requisições por IP" },
     	        { "valor": "totalBytesHora", "descricao": "Total de bytes por hora" },
+    	        { "valor": "tempoPorUrlPorHora", "descricao": "Tempo médio de requisições por URL por hora" }    	        
     	    ]
     	});
 
@@ -352,13 +453,44 @@ Ext.define('Nerif.view.tab.Estatistica', {
     	    editable: false,
     	    displayField: 'descricao',
     	    valueField: 'valor',
-    		allowBlank: false
+    		allowBlank: false,
+    		listeners: {
+    			'select': function(me) {
+    				
+    				filtroText.show();
+    				    				
+    				filtroText.allowBlank = true;    				
+    				filtroText.setValue(null);
+    				
+    				switch(me.getValue()) {
+    				case 'totalRequisicoesHora':
+    				case 'totalBytesHora':
+    					filtroText.setFieldLabel('URL');
+    					break;
+    				case 'tempoPorUrlPorHora':
+    					filtroText.setFieldLabel('URL');
+    					filtroText.allowBlank = false;
+    					break;
+    				case 'totalExtensoes':
+    					filtroText.setFieldLabel('Extensão');
+    					break;
+    				case 'totalIP':
+    					filtroText.setFieldLabel('IP');
+    					break;
+					default:
+						filtroText.setFieldLabel('Teste');
+    				}
+    				
+    				
+    				filtroText.validate();
+    			}
+    		}
     	});
     	
     	var filtroText = Ext.create('Ext.form.Text', {
-    		fieldLabel: 'Filtro',
     		labelAlign: 'right',
-    		width: 300
+    		width: 300,
+    		hidden: true
     	});
     	
     	var buscarBtn = Ext.create('Ext.button.Button', {

@@ -1,4 +1,5 @@
 var fs = require('fs');
+var path = require('path');
 var dialog = require('electron').remote.dialog;
 
 Ext.define('Nerif.view.tab.Teste', {
@@ -120,8 +121,8 @@ Ext.define('Nerif.view.tab.Teste', {
     		handler: function(me) {
     			var data = Ext.Date.format(dataField.getValue(), 'Y-m-d');
     			
-    			fileHdn.setValue(diretorioField.getValue() + '\\nerif_' + data + '.log');
-    			
+    			fileHdn.setValue(path.join(diretorioField.getValue(), 'nerif_' + data + '.log'));
+    			    			
     			if (fs.existsSync(fileHdn.getValue())) {
     				Ext.Msg.confirm('Atenção', 'Já existe um arquivo de testes para esta data. Todas as informações contidas nele serão perdidas. Deseja continuar?', function(btn) {
     					if(btn === 'yes') {

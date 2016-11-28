@@ -37,9 +37,6 @@ public class ModuloAlerta {
 	private HashMap<Indicador, Alerta> indicadorAlerta = new HashMap<>();
 
 	private ModuloAlerta() {
-	}
-
-	public void init() {
 		Config.indicadores.forEach((k, v) -> {
 			indicadorAlerta.put(v, new Alerta());
 		});

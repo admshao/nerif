@@ -54,6 +54,9 @@ public class Config {
 	public static final Timer TIMER = new Timer();
 	public static volatile int activeThreads = 0;
 	
+	public static final String ARQUIVO_LAST_MODIFIED_TIME = "lastModifiedTime";
+	public static final String ARQUIVO_SIZE = "size";
+	
 	public static final String QUANTIDADE = "q";
 	public static final String MIN = "mi";
 	public static final String MAX = "ma";

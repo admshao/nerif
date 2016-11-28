@@ -11,7 +11,7 @@ public class Main {
 		try {
 			Config.initConfig(args);
 
-			ModuloAlerta.getInstance().init();
+			ModuloAlerta.getInstance();
 			ModuloAnalise.getInstance();
 
 			switch (Config.tipoServidor) {

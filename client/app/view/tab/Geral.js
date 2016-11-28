@@ -11,7 +11,11 @@ Ext.define('Nerif.view.tab.Geral', {
 
     initComponent: function () {
         var obj = this;
-
+        
+        var stopApp = function() {
+        	kill(pid);
+        };
+        
         var dadosServidorContainer = Ext.create('Nerif.component.server.Information', {
             region: 'north'
         });
@@ -61,22 +65,35 @@ Ext.define('Nerif.view.tab.Geral', {
             }
         });
         
+        var  stopBtn = Ext.create('Ext.button.Button', {
+        	text: 'Stop',
+        	hidden: true,
+        	handler: function(me) {
+        		stopApp();
+        		me.hide();
+        		runBtn.show();
+        	}
+        });
+        
         var runBtn = Ext.create('Ext.button.Button', {
             formBind: true,
             text: 'Start',
-            handler: function () {
+            handler: function (me) {
                 Gerenciador.run(function(err) {
 					if(err) {
 						Ext.Msg.alert('Erro', 'Ocorreu um erro ao salvar suas configurações');
 					} else {
 						pid = cp.exec('java -jar ../bin/Nerif.jar -a -e').pid;
+						
+						me.hide();
+						stopBtn.show();
 					}
 				});
             }
         });
 
         this.items = [dadosServidorContainer, centerpanel, groupsGrid];
-        this.buttons = ['->', saveBtn, runBtn];
+        this.buttons = ['->', saveBtn, stopBtn, runBtn];
 
         this.on('afterrender', function (me) {
             me.isValid();
@@ -85,7 +102,7 @@ Ext.define('Nerif.view.tab.Geral', {
         this.callParent();
         
         window.onbeforeunload = function(event) {
-			kill(pid);
+        	stopApp();
         };
     }
 });

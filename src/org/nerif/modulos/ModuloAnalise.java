@@ -1,18 +1,18 @@
 package org.nerif.modulos;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.nerif.estatistica.EstatisticasAnalise;
 import org.nerif.ml.AnaliseURL;
 import org.nerif.ml.ConjuntoTreinamentoArvore;
 import org.nerif.ml.DecisionTree;
-import org.nerif.model.FormatoLog;
+import org.nerif.ml.TipoTreinamento;
+import org.nerif.model.Indicador;
 import org.nerif.model.InfoPropriedade;
+import org.nerif.model.Regra;
 import org.nerif.util.Config;
 
 public class ModuloAnalise {
@@ -44,26 +44,43 @@ public class ModuloAnalise {
 		}
 	}
 
-	public void processaLinha(final HashMap<String, String> coluns, final boolean indicadorAtivado) {
+	public void processaLinha(final HashMap<String, String> coluns, final List<Indicador> indicadoresAtivados) {
+		boolean indicadorAtivado = !indicadoresAtivados.isEmpty();
 		String url = coluns.get(InfoPropriedade.URL.name());
 		int ultimaBarra = url.lastIndexOf("/");
 		int ultimoPonto = url.lastIndexOf(".");
 		if (ultimoPonto > ultimaBarra) {
-			
-		} else {
-			
+			return;
 		}
-		
+
 		if (indicadorAtivado) {
 			if (!conjuntoTreinamento.urlVerificada.containsKey(url)) {
-				HashMap<String, HashMap<String, String>> maps = new HashMap<>();
-				maps.put(Config.RUIM, coluns);
-				conjuntoTreinamento.urlVerificada.put(url, maps);
+				boolean temPorta = false;
+				boolean temTempo = false;
+				for (Indicador indicador : indicadoresAtivados) {
+					for (Regra regra : indicador.getRegras()) {
+						temPorta |= regra.getInfoPropriedade().name().equals(InfoPropriedade.PORTA.name());
+						temTempo |= regra.getInfoPropriedade().name().equals(InfoPropriedade.TEMPO.name());
+					}
+				}
+
+				TipoTreinamento tt = new TipoTreinamento();
+				if (temPorta) {
+					tt.tipos.add(InfoPropriedade.PORTA);
+				}
+				if (temTempo) {
+					tt.tipos.add(InfoPropriedade.TEMPO);
+				}
+				tt.tipoVerificado = coluns;
+
+				HashMap<String, TipoTreinamento> mapTipoTreinamento = new HashMap<>();
+				mapTipoTreinamento.put(Config.RUIM, tt);
+				conjuntoTreinamento.urlVerificada.put(url, mapTipoTreinamento);
 			}
 
 			ModuloEstatistico.getInstance().processaUltimasUrls(ultimasUrls);
 		}
-		
+
 		if (ultimasUrls.size() < Config.ULTIMAS_N_LINHAS) {
 			ultimasUrls.add(url);
 		} else {
@@ -76,17 +93,17 @@ public class ModuloAnalise {
 			boolean resultado = tree.classify(new ArrayList<String>() {
 				private static final long serialVersionUID = 8937334946032327062L;
 				{
-					for (FormatoLog formato : Config.colunasLog) {
-						add(coluns.get(formato.getInfoPropriedade().name()));
+					for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
+						add(coluns.get(infoPropriedade.name()));
 					}
 				}
 			});
-			
-			if (!indicadorAtivado ^ resultado) {
+
+			if (!(indicadorAtivado ^ resultado)) {
 				if (resultado) {
-					System.out.println(coluns);
-				} else {
-					System.out.println(2);
+					System.out.println(
+							"Indicador classificou como linha ruim porem arvore classificou como boa (\"linha boa\") "
+									+ coluns);
 				}
 			}
 		}
@@ -95,19 +112,18 @@ public class ModuloAnalise {
 	public void gerarRelatorio(final EstatisticasAnalise estatisticasArquivo) {
 		List<List<String>> rows = preparaLinhasArvore(estatisticasArquivo);
 
-		try {
-			Path p = Paths.get(Config.URI_TRAINING);
-			Files.write(p, Config.GSON.toJson(conjuntoTreinamento).getBytes());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		/*
+		 * try { Path p = Paths.get(Config.URI_TRAINING); Files.write(p,
+		 * Config.GSON.toJson(conjuntoTreinamento).getBytes()); } catch
+		 * (Exception e) { e.printStackTrace(); }
+		 */
 
 		System.out.println("Build da arvore em...");
 		long start = System.nanoTime();
 		tree = new DecisionTree(rows);
 		long total = System.nanoTime() - start;
 		System.out.println("segundos -> " + total / 1000000000d);
-		//tree.print();
+		tree.print();
 	}
 
 	private List<List<String>> preparaLinhasArvore(EstatisticasAnalise estatisticas) {
@@ -115,51 +131,67 @@ public class ModuloAnalise {
 		List<HashMap<String, String>> novos = new ArrayList<>();
 
 		conjuntoTreinamento.urlVerificada.forEach((k, v) -> {
-			List<String> data = new ArrayList<>();
-			HashMap<String, String> mapRuim = v.get(Config.RUIM);
-			HashMap<String, String> mapBom = v.get(Config.BOM);
+			TipoTreinamento treinoRuim = v.get(Config.RUIM);
+			TipoTreinamento treinoBom = v.get(Config.BOM);
 
-			for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
-				data.add(mapRuim.get(infoPropriedade.name()));
-			}
-			data.add(Config.RUIM);
-			rows.add(data);
+			boolean temPorta = treinoRuim.tipos.stream().anyMatch(p -> p.name().equals(InfoPropriedade.PORTA.name()));
+			boolean temTempo = treinoRuim.tipos.stream().anyMatch(p -> p.name().equals(InfoPropriedade.TEMPO.name()));
 
-			if (mapBom != null) {
-				data = new ArrayList<>();
+			if (treinoBom != null) {
+				List<String> data = new ArrayList<>();
 				for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
-					data.add(mapBom.get(infoPropriedade.name()));
+					data.add(treinoBom.tipoVerificado.get(infoPropriedade.name()));
 				}
 				data.add(Config.BOM);
 				rows.add(data);
 			} else if (estatisticas != null) {
 				AnaliseURL analiseURL = estatisticas.getUrlAnalise().get(k);
 				if (analiseURL != null) {
-					data = new ArrayList<>();
-					mapBom = new HashMap<>();
+					List<String> data = new ArrayList<>();
+					treinoBom = new TipoTreinamento();
 
-					double valor = ((analiseURL.max - analiseURL.min) + (analiseURL.max - (analiseURL.duracao / analiseURL.quantidade))) * analiseURL.quantidade;
-					double novoTempo = (analiseURL.duracao / analiseURL.quantidade) - Math.log(valor) - Math.log(analiseURL.quantidade);
-					
 					for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
-						if (infoPropriedade.name().equals(InfoPropriedade.TEMPO.name())) {
-							mapBom.put(infoPropriedade.name(), String.valueOf(novoTempo > analiseURL.min ? (long) novoTempo: analiseURL.min));
+						if (infoPropriedade.name().equals(InfoPropriedade.TEMPO.name()) && temTempo) {
+							double valor = ((analiseURL.max - analiseURL.min)
+									+ (analiseURL.max - (analiseURL.duracao / analiseURL.quantidade)))
+									* analiseURL.quantidade;
+							double penalidade = Math.log(valor) - Math.log(analiseURL.quantidade);
+							double novoTempo = (analiseURL.duracao / analiseURL.quantidade) - penalidade;
+							treinoBom.tipoVerificado.put(infoPropriedade.name(),
+									String.valueOf(novoTempo - penalidade > analiseURL.min
+											? novoTempo - penalidade : analiseURL.min));
+							treinoRuim.tipoVerificado.put(infoPropriedade.name(),
+									String.valueOf(novoTempo > analiseURL.min ? novoTempo : analiseURL.min));
+						} else if (infoPropriedade.name().equals(InfoPropriedade.PORTA.name()) && temPorta) {
+							String portaMaisFrequente = estatisticas.getPortaQuantidade().entrySet().stream()
+									.max(Map.Entry.comparingByValue()).get().getKey();
+							treinoBom.tipoVerificado.put(infoPropriedade.name(), portaMaisFrequente);
 						} else {
-							mapBom.put(infoPropriedade.name(), mapRuim.get(infoPropriedade.name()));
+							treinoBom.tipoVerificado.put(infoPropriedade.name(),
+									treinoRuim.tipoVerificado.get(infoPropriedade.name()));
 						}
-						
-						data.add(mapBom.get(infoPropriedade.name()));
+
+						data.add(treinoBom.tipoVerificado.get(infoPropriedade.name()));
 					}
 
-					novos.add(mapBom);
+					novos.add(treinoBom.tipoVerificado);
 					data.add(Config.BOM);
 					rows.add(data);
 				}
 			}
+
+			List<String> data = new ArrayList<>();
+			for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
+				data.add(treinoRuim.tipoVerificado.get(infoPropriedade.name()));
+			}
+			data.add(Config.RUIM);
+			rows.add(data);
 		});
 
 		novos.forEach(mapa -> {
-			conjuntoTreinamento.urlVerificada.get(mapa.get(InfoPropriedade.URL.name())).put(Config.BOM, mapa);
+			TipoTreinamento tt = new TipoTreinamento();
+			tt.tipoVerificado = mapa;
+			conjuntoTreinamento.urlVerificada.get(mapa.get(InfoPropriedade.URL.name())).put(Config.BOM, tt);
 		});
 
 		return rows;

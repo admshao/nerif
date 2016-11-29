@@ -5,7 +5,7 @@
 			"infoPropriedade": "DATA",
 			"tipoValor": "DATA",
 			"iis": "date",
-			"apache": "%d",
+			"apache": "%t",
 			"nginx": "$d"
 		},
 		{
@@ -13,14 +13,13 @@
 			"infoPropriedade": "HORA",
 			"tipoValor": "HORA",
 			"iis": "time",
-			"apache": "%d",
 			"nginx": "$d"
 		},
 		{
 			"description": "URL",
 			"infoPropriedade": "URL",
 			"tipoValor": "STRING",
-			"apache": "%u",
+			"apache": "%U",
 			"nginx": "$u",
 			"iis": "cs-uri-stem"
 		},
@@ -36,7 +35,7 @@
 			"description": "Tamanho",
 			"infoPropriedade": "TAMANHO",
 			"tipoValor": "NUMERICO",
-			"apache": "%t",
+			"apache": "%b",
 			"nginx": "$t",
 			"iis": "sc-bytes"
 		},
@@ -44,7 +43,7 @@
 			"description": "Tempo total da requisição",
 			"infoPropriedade": "TEMPO",
 			"tipoValor": "NUMERICO",
-			"apache": "%i",
+			"apache": "%D",
 			"nginx": "$i",
 			"iis": "time-taken"
 		},
@@ -52,7 +51,7 @@
 			"description": "Endereço IP do client que fez a requisição",
 			"infoPropriedade": "CLIENT_IP",
 			"tipoValor": "STRING",
-			"apache": "%ci",
+			"apache": "%A",
 			"nginx": "$ci",
 			"iis": "c-ip"
 		},
@@ -60,7 +59,7 @@
 			"description": "Código da situação do Protocolo utilizado",
 			"infoPropriedade": "PROTOCOL_STATUS",
 			"tipoValor": "NUMERICO",
-			"apache": "%casi",
+			"apache": "%s",
 			"nginx": "$casi",
 			"iis": "sc-status"
 		}

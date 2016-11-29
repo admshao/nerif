@@ -38,31 +38,32 @@ public class Config {
 	public static final Gson GSON = new Gson();
 	public static final Charset CHARSET = Charset.forName("UTF-8");
 	public static final String WHITESPACE = " ";
-	
+
 	public static boolean EXECUTA_MODULO_ESTATISTICO = false;
 	public static boolean EXECUTA_MODULO_ANALISE = false;
-	
+
 	public static boolean initTree = false;
-	
+
 	public static final Lock lock = new ReentrantLock(true);
-	
+
 	public static final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public static final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
 	public static final ConcurrentDateTimeFormat dfDataHora = new ConcurrentDateTimeFormat();
-	
-	public static final ExecutorService THREAD_POOL_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+	public static final ExecutorService THREAD_POOL_EXECUTOR = Executors
+			.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	public static final Timer TIMER = new Timer();
 	public static volatile int activeThreads = 0;
-	
+
 	public static final String ARQUIVO_LAST_MODIFIED_TIME = "lastModifiedTime";
 	public static final String ARQUIVO_SIZE = "size";
-	
+
 	public static final String QUANTIDADE = "q";
 	public static final String MIN = "mi";
 	public static final String MAX = "ma";
 	public static final String BOM = "b";
 	public static final String RUIM = "r";
-	
+
 	public static boolean EMAIL_ALERT = false;
 	public static String EMAIL_USERNAME;
 	public static String EMAIL_PASSWORD;
@@ -80,40 +81,50 @@ public class Config {
 	public static final String SMS_BODY = "Atencao. Foi detectada uma violacao de um indicador vinculado a um grupo no qual voce"
 			+ " faz parte. Descricao do Indicador: %indicador%. Data e Hora da Deteccao: %data%. Numero de vezes que este alerta "
 			+ "foi disparado hoje: %vezes%.";
-	
+
 	public static String PATH_BASE_STRING;
 	public static URI URI_CONFIG;
 	public static URI URI_TRAINING;
 	public static URI URI_INTEGRACAO;
 	public static String PATH_STATISTICS;
+	public static String PATH_DAILY_REPORTS; 
 	
-	public static final HashSet<InfoPropriedade> colunasParaArvore = new HashSet<InfoPropriedade>() {{
-		add(InfoPropriedade.URL); add(InfoPropriedade.TEMPO);
-	}};
-	
+	public static final HashSet<InfoPropriedade> colunasParaArvore = new HashSet<InfoPropriedade>() {
+		private static final long serialVersionUID = -8728979427052218260L;
+
+		{
+			add(InfoPropriedade.URL);
+			add(InfoPropriedade.TEMPO);
+		}
+	};
+
 	public static final int ULTIMAS_N_LINHAS = 30;
-	public static final List<String> EXTENSAO_IMAGENS = new ArrayList<String>(){
+	public static final List<String> EXTENSAO_IMAGENS = new ArrayList<String>() {
 		private static final long serialVersionUID = -6768575329235576899L;
 
-	{
-		add("jpg");add("png");
-	}};
-	public static final List<String> EXTENSAO_MINIMIFICAVEIS = new ArrayList<String>(){
+		{
+			add("jpg");
+			add("png");
+		}
+	};
+	public static final List<String> EXTENSAO_MINIMIFICAVEIS = new ArrayList<String>() {
 		private static final long serialVersionUID = -4206550125176069944L;
 
-	{
-		add("js");add("css");
-	}};
-	
-	public static final long MIN_INTERVALO_RELATORIO = 1;
+		{
+			add("js");
+			add("css");
+		}
+	};
+
+	public static final long MIN_INTERVALO_RELATORIO = 5;
 	public static final long INTERVALO_RELATORIO_GERAL = 24 * 60;
 
 	public static ConjuntoTreinamentoArvore conjuntoTreinamento = new ConjuntoTreinamentoArvore();
-	
+
 	public static long horaRelatorioGeral;
 	public static String tipoServidor;
 	public static String caminhoLog;
-	
+
 	public static List<FormatoLog> colunasLog = new ArrayList<>();
 	public static HashMap<Integer, Usuario> usuarios = new HashMap<>();
 	public static HashMap<Integer, Indicador> indicadores = new HashMap<>();
@@ -143,18 +154,19 @@ public class Config {
 				break;
 			}
 		}
-		
+
 		if (EXECUTA_MODULO_ANALISE && !EXECUTA_MODULO_ESTATISTICO) {
 			return;
 		}
 
-		PATH_BASE_STRING = "file:///" + Paths.get("").toAbsolutePath().toString() + "/client/"; // ESTAS LINHAS PARA ECLIPSE
-		//PATH_BASE_STRING = "file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/"; // ESTAS LINHAS PARA BUILDS
-		
+		//PATH_BASE_STRING = "file:///" + Paths.get("").toAbsolutePath().toString() + "/client/"; // ESTAS LINHAS PARA ECLIPSE
+		PATH_BASE_STRING = "file:///" + Paths.get("").toAbsolutePath().toString() + "/../client/"; // ESTAS LINHAS PARA BUILDS 
+
 		URI_CONFIG = new URL(PATH_BASE_STRING + "config/config.json").toURI();
 		URI_TRAINING = new URL(PATH_BASE_STRING + "config/training.json").toURI();
 		URI_INTEGRACAO = new URL(PATH_BASE_STRING + "config/integracao.json").toURI();
 		PATH_STATISTICS = PATH_BASE_STRING + "statistics/";
+		PATH_DAILY_REPORTS = PATH_BASE_STRING + "dailyReports/";
 		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
 		JsonElement cfgFileElement = GSON.fromJson(configString, JsonElement.class);
@@ -162,7 +174,7 @@ public class Config {
 
 		tipoServidor = cfgFileObj.get("server").getAsString();
 		caminhoLog = cfgFileObj.get("logDirectory").getAsString();
-		 
+
 		Date agora = new Date();
 		String[] splitHora = cfgFileObj.get("executionTime").getAsString().split(":");
 		long hora = Long.valueOf(splitHora[0]);
@@ -173,16 +185,17 @@ public class Config {
 		horaRelatorioGeral = msExecucao - msAgora + (msAgora > msExecucao ? 24 * 60 * 60 * 1000 : 0);
 
 		if (EMAIL_ALERT || SMS_ALERT) {
-			JsonElement cfgIntegracaoFileElement = GSON.fromJson(new String(Files.readAllBytes(Paths.get(URI_INTEGRACAO)), CHARSET), JsonElement.class);
+			JsonElement cfgIntegracaoFileElement = GSON
+					.fromJson(new String(Files.readAllBytes(Paths.get(URI_INTEGRACAO)), CHARSET), JsonElement.class);
 			JsonObject integracaoFileObj = cfgIntegracaoFileElement.getAsJsonObject();
-			
+
 			if (EMAIL_ALERT) {
 				String[] emailSplit = integracaoFileObj.get("email").getAsString().split(";");
 				EMAIL_USERNAME = emailSplit[0];
 				EMAIL_PASSWORD = emailSplit[1];
 				Email.getInstance();
 			}
-			
+
 			if (SMS_ALERT) {
 				String[] smsSplit = integracaoFileObj.get("sms").getAsString().split(";");
 				SMS_ACCOUNT_SID = smsSplit[0];
@@ -205,7 +218,7 @@ public class Config {
 					TipoValor.valueOf(obj.get("tipoValor").getAsString()));
 			colunasLog.add(formatoLog);
 		}
-		
+
 		iterator = usersArray.iterator();
 		while (iterator.hasNext()) {
 			JsonObject obj = iterator.next().getAsJsonObject();
@@ -222,10 +235,10 @@ public class Config {
 			List<Regra> regras = new ArrayList<Regra>();
 			while (regraIterator.hasNext()) {
 				JsonObject regraObj = regraIterator.next().getAsJsonObject();
-				InfoPropriedade infoPropriedade = InfoPropriedade.valueOf(regraObj.get("infoPropriedade").getAsString());
+				InfoPropriedade infoPropriedade = InfoPropriedade
+						.valueOf(regraObj.get("infoPropriedade").getAsString());
 				colunasParaArvore.add(infoPropriedade);
-				Regra regra = new Regra(regraObj.get("descPropriedade").getAsString(),
-						infoPropriedade,
+				Regra regra = new Regra(regraObj.get("descPropriedade").getAsString(), infoPropriedade,
 						TipoComparacao.valueOf(regraObj.get("tipoComparacao").getAsString()),
 						TipoValor.valueOf(regraObj.get("tipoValor").getAsString()),
 						regraObj.get("valor1").getAsString(),
@@ -261,12 +274,16 @@ public class Config {
 					indicatorsHashSet);
 			grupos.put(grupo.getId(), grupo);
 		}
-		
+
 		if (EXECUTA_MODULO_ANALISE) {
 			if (Paths.get(URI_TRAINING).toFile().exists()) {
 				String trainingString = new String(Files.readAllBytes(Paths.get(URI_TRAINING)), CHARSET);
 				conjuntoTreinamento = GSON.fromJson(trainingString, ConjuntoTreinamentoArvore.class);
-				initTree = true;
+				if (colunasParaArvore.hashCode() != conjuntoTreinamento.colunasParaArvore.hashCode()) {
+					Files.delete(Paths.get(URI_TRAINING));
+				} else {
+					initTree = true;
+				}
 			}
 		}
 	}

@@ -3,7 +3,9 @@ package org.nerif.modulos;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
+import org.nerif.model.ConcurrentApacheDateTimeFormat;
 import org.nerif.model.ConcurrentDateFormat;
 import org.nerif.model.ConcurrentTimeFormat;
 import org.nerif.model.FormatoLog;
@@ -16,6 +18,7 @@ import org.nerif.util.Config;
 public class ModuloSimples {
 	public final ConcurrentDateFormat dfData = new ConcurrentDateFormat();
 	public final ConcurrentTimeFormat dfHora = new ConcurrentTimeFormat();
+	public final ConcurrentApacheDateTimeFormat apachedtHora = new ConcurrentApacheDateTimeFormat();
 	private ValidaIndicador[] indicadoresBase = new ValidaIndicador[Config.indicadores.size()];
 	private HashMap<InfoPropriedade, Boolean> verificaColuna = new HashMap<>();
 
@@ -48,15 +51,15 @@ public class ModuloSimples {
 	}
 
 	private void validaIndicadores(final HashMap<String, String> cols) {
-		boolean indicadorAtivado = false;
+		List<Indicador> indicadoresAtivados = new ArrayList<>();
 		for (ValidaIndicador validaIndicador : indicadoresBase) {
 			if (validaIndicador.regras.stream().reduce(true, (a, b) -> a & b)) {
 				ModuloAlerta.getInstance().indicadorAtivado(validaIndicador.indicador, cols);
-				indicadorAtivado = true;
+				indicadoresAtivados.add(validaIndicador.indicador);
 			}
 		}
 		if (Config.EXECUTA_MODULO_ANALISE) {
-			ModuloAnalise.getInstance().processaLinha(cols, indicadorAtivado);
+			ModuloAnalise.getInstance().processaLinha(cols, indicadoresAtivados);
 		}
 	}
 
@@ -126,7 +129,7 @@ public class ModuloSimples {
 						break;
 					case DATA:
 						try {
-							Date result = dfData.convertStringToDate(s);
+							Date result = Config.tipoServidor.equals("iis") ? dfData.convertStringToDate(s) : apachedtHora.convertStringToDate(s);
 							switch (regra.getTipoComparacao()) {
 							case IGUAL:
 								if (result.compareTo(regra.getValorData1()) == 0) {

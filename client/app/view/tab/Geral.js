@@ -83,7 +83,7 @@ Ext.define('Nerif.view.tab.Geral', {
 					if(err) {
 						Ext.Msg.alert('Erro', 'Ocorreu um erro ao salvar suas configurações');
 					} else {
-						pid = cp.exec('java -jar ../bin/Nerif.jar -a -e -m -s 2> output.txt').pid;
+						pid = cp.exec('java -d64 -server  -XX:+AggressiveOpts  -Xmn10G -Xmx24G -Xms24G -jar ../bin/Nerif.jar -a -e > output.txt').pid;
 						
 						me.hide();
 						stopBtn.show();

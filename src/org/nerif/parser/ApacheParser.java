@@ -28,8 +28,7 @@ import org.nerif.modulos.ModuloEstatistico;
 import org.nerif.modulos.ModuloSimples;
 import org.nerif.util.Config;
 
-public class IISParser {
-
+public class ApacheParser {
 	private HashMap<String, HashMap<Integer, InfoPropriedade>> arquivosIndices = new HashMap<>();
 	private HashMap<String, Long> arquivosParaAnalise = new HashMap<>();
 	private boolean esperaArquivosExistentes = false;
@@ -56,6 +55,7 @@ public class IISParser {
 						Config.THREAD_POOL_EXECUTOR.submit(new ArquivoExistenteEstatistico(f.toFile()));
 					});
 		}
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -118,7 +118,11 @@ public class IISParser {
 								final HashMap<String, String> coluns = new HashMap<>(Config.colunasLog.size());
 								try {
 									translateMap.forEach((k, v) -> {
-										coluns.put(v.getInfoPropriedade(), splitFields[k]);
+										if (v.name().equals(InfoPropriedade.DATA.name())) {
+											coluns.put(v.getInfoPropriedade(), splitFields[k].substring(1));
+										} else {
+											coluns.put(v.getInfoPropriedade(), splitFields[k]);
+										}
 									});
 									moduloSimples.processaLinha(coluns);
 									arquivosParaAnalise.put(file.getName(), (Long) map.get(Config.ARQUIVO_SIZE));
@@ -175,12 +179,20 @@ public class IISParser {
 					} else {
 						String[] splitFields = line.split(Config.WHITESPACE);
 						final HashMap<String, String> coluns = new HashMap<>(Config.colunasLog.size());
-						try {
-							translateMap.forEach((k, v) -> {
-								coluns.put(v.getInfoPropriedade(), splitFields[k]);
-							});
-							moduloSimples.processaLinha(coluns);
-						} catch (Exception e) {
+						String duracao = splitFields[9];
+						if (!duracao.equals("-")) {
+							try {
+								translateMap.forEach((k, v) -> {
+									if (v.name().equals(InfoPropriedade.DATA.name())) {
+										coluns.put(v.getInfoPropriedade(), splitFields[k].substring(1));
+									} else {
+										coluns.put(v.getInfoPropriedade(), splitFields[k]);
+									}
+								});
+								moduloSimples.processaLinha(coluns);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 						}
 					}
 				}
@@ -229,12 +241,19 @@ public class IISParser {
 					} else {
 						String[] splitFields = line.split(Config.WHITESPACE);
 						final HashMap<String, String> coluns = new HashMap<>(Config.colunasLog.size());
-						try {
-							translateMap.forEach((k, v) -> {
-								coluns.put(v.getInfoPropriedade(), splitFields[k]);
-							});
-							estatisticaArquivo.processaLinha(coluns);
-						} catch (Exception e) {
+						String duracao = splitFields[9];
+						if (!duracao.equals("-")) {
+							try {
+								translateMap.forEach((k, v) -> {
+									if (v.name().equals(InfoPropriedade.DATA.name())) {
+										coluns.put(v.getInfoPropriedade(), splitFields[k].substring(1));
+									} else {
+										coluns.put(v.getInfoPropriedade(), splitFields[k]);
+									}
+								});
+								estatisticaArquivo.processaLinha(coluns);
+							} catch (Exception e) {
+							}
 						}
 					}
 				}
@@ -250,5 +269,4 @@ public class IISParser {
 		}
 
 	}
-
 }

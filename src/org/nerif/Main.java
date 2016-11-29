@@ -2,6 +2,7 @@ package org.nerif;
 
 import org.nerif.modulos.ModuloAlerta;
 import org.nerif.modulos.ModuloAnalise;
+import org.nerif.parser.ApacheParser;
 import org.nerif.parser.IISParser;
 import org.nerif.util.Config;
 import org.nerif.util.Email;
@@ -18,6 +19,11 @@ public class Main {
 			case "iis":
 				IISParser parser = new IISParser();
 				parser.run();
+				break;
+			case "apache":
+				ApacheParser apache = new ApacheParser();
+				apache.run();
+				break;
 			default:
 				break;
 			}

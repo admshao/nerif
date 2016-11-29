@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.nerif.estatistica.EstatisticaArquivo;
 import org.nerif.estatistica.EstatisticasAnalise;
+import org.nerif.ml.AnaliseURL;
+import org.nerif.ml.ConjuntoTreinamentoArvore;
 import org.nerif.ml.DecisionTree;
-import org.nerif.model.ConjuntoTreinamentoArvore;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.InfoPropriedade;
 import org.nerif.util.Config;
@@ -19,6 +19,9 @@ public class ModuloAnalise {
 
 	private static ModuloAnalise instance = null;
 	private ConjuntoTreinamentoArvore conjuntoTreinamento = null;
+	private List<String> ultimasUrls = new ArrayList<>(Config.ULTIMAS_N_LINHAS);
+	private int indexUltimasUrls = 0;
+
 	private DecisionTree tree = null;
 
 	public static ModuloAnalise getInstance() {
@@ -35,9 +38,6 @@ public class ModuloAnalise {
 			long start = System.nanoTime();
 			tree = new DecisionTree(rows);
 			long total = System.nanoTime() - start;
-			System.out.println("Nano -> " + total);
-			System.out.println("Seila -> " + total / 1000d);
-			System.out.println("milis -> " + total / 1000000d);
 			System.out.println("segundos -> " + total / 1000000000d);
 		} else {
 			conjuntoTreinamento = new ConjuntoTreinamentoArvore();
@@ -45,20 +45,35 @@ public class ModuloAnalise {
 	}
 
 	public void processaLinha(final HashMap<String, String> coluns, final boolean indicadorAtivado) {
+		String url = coluns.get(InfoPropriedade.URL.name());
+		int ultimaBarra = url.lastIndexOf("/");
+		int ultimoPonto = url.lastIndexOf(".");
+		if (ultimoPonto > ultimaBarra) {
+			
+		} else {
+			
+		}
+		
 		if (indicadorAtivado) {
-			String url = coluns.get(InfoPropriedade.URL.name());
 			if (!conjuntoTreinamento.urlVerificada.containsKey(url)) {
 				HashMap<String, HashMap<String, String>> maps = new HashMap<>();
 				maps.put(Config.RUIM, coluns);
 				conjuntoTreinamento.urlVerificada.put(url, maps);
 			}
-			conjuntoTreinamento.urlQuantidade.compute(url, (k, v) -> v == null ? 1l : v + 1);
-			long tempo = Long.valueOf(coluns.get(InfoPropriedade.TEMPO.name()));
-			conjuntoTreinamento.urlMedia.compute(url, (k, v) -> v == null ? tempo : v + tempo);
+
+			ModuloEstatistico.getInstance().processaUltimasUrls(ultimasUrls);
 		}
+		
+		if (ultimasUrls.size() < Config.ULTIMAS_N_LINHAS) {
+			ultimasUrls.add(url);
+		} else {
+			ultimasUrls.set(indexUltimasUrls, url);
+		}
+		if (++indexUltimasUrls == Config.ULTIMAS_N_LINHAS)
+			indexUltimasUrls = 0;
 
 		if (tree != null) {
-			tree.classify(new ArrayList<String>() {
+			boolean resultado = tree.classify(new ArrayList<String>() {
 				private static final long serialVersionUID = 8937334946032327062L;
 				{
 					for (FormatoLog formato : Config.colunasLog) {
@@ -66,11 +81,19 @@ public class ModuloAnalise {
 					}
 				}
 			});
+			
+			if (!indicadorAtivado ^ resultado) {
+				if (resultado) {
+					System.out.println(coluns);
+				} else {
+					System.out.println(2);
+				}
+			}
 		}
 	}
 
-	public void gerarRelatorio(final EstatisticaArquivo estatisticasArquivo) {
-		List<List<String>> rows = preparaLinhasArvore(estatisticasArquivo.getEstatisticasAnalise());
+	public void gerarRelatorio(final EstatisticasAnalise estatisticasArquivo) {
+		List<List<String>> rows = preparaLinhasArvore(estatisticasArquivo);
 
 		try {
 			Path p = Paths.get(Config.URI_TRAINING);
@@ -83,32 +106,8 @@ public class ModuloAnalise {
 		long start = System.nanoTime();
 		tree = new DecisionTree(rows);
 		long total = System.nanoTime() - start;
-		System.out.println("Nano -> " + total);
-		System.out.println("Seila -> " + total / 1000d);
-		System.out.println("milis -> " + total / 1000000d);
 		System.out.println("segundos -> " + total / 1000000000d);
-		// tree.print();
-
-		System.out.println(tree.classify(new ArrayList<String>() {
-			private static final long serialVersionUID = -413906126211789308L;
-			{
-				add("2016-02-29");
-				add("10:50:40");
-				add("8000");
-				add("/Admin.ww8/clientServerSync");
-				add("25000");
-			}
-		}));
-		System.out.println(tree.classify(new ArrayList<String>() {
-			private static final long serialVersionUID = -413906126211789308L;
-			{
-				add("2016-02-29");
-				add("09:20:10");
-				add("8000");
-				add("/Admin.ww8/clientServerSync");
-				add("5000000");
-			}
-		}));
+		//tree.print();
 	}
 
 	private List<List<String>> preparaLinhasArvore(EstatisticasAnalise estatisticas) {
@@ -120,36 +119,36 @@ public class ModuloAnalise {
 			HashMap<String, String> mapRuim = v.get(Config.RUIM);
 			HashMap<String, String> mapBom = v.get(Config.BOM);
 
-			for (FormatoLog formato : Config.colunasLog) {
-				data.add(mapRuim.get(formato.getInfoPropriedade().name()));
+			for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
+				data.add(mapRuim.get(infoPropriedade.name()));
 			}
 			data.add(Config.RUIM);
 			rows.add(data);
 
 			if (mapBom != null) {
 				data = new ArrayList<>();
-				for (FormatoLog formato : Config.colunasLog) {
-					data.add(mapBom.get(formato.getInfoPropriedade().name()));
+				for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
+					data.add(mapBom.get(infoPropriedade.name()));
 				}
 				data.add(Config.BOM);
 				rows.add(data);
 			} else if (estatisticas != null) {
-				Long val = estatisticas.getUrlDuracaoEstatistica().get(k);
-				if (val != null) {
+				AnaliseURL analiseURL = estatisticas.getUrlAnalise().get(k);
+				if (analiseURL != null) {
 					data = new ArrayList<>();
 					mapBom = new HashMap<>();
 
-					String urlTempoMedio = String.valueOf(val / estatisticas.getUrlQuantidadeEstatistica().get(k));
-
-					for (FormatoLog formato : Config.colunasLog) {
-						if (formato.getInfoPropriedade().name().equals(InfoPropriedade.TEMPO.name())) {
-							mapBom.put(formato.getInfoPropriedade().name(), urlTempoMedio);
+					double valor = ((analiseURL.max - analiseURL.min) + (analiseURL.max - (analiseURL.duracao / analiseURL.quantidade))) * analiseURL.quantidade;
+					double novoTempo = (analiseURL.duracao / analiseURL.quantidade) - Math.log(valor) - Math.log(analiseURL.quantidade);
+					
+					for (InfoPropriedade infoPropriedade : Config.colunasParaArvore) {
+						if (infoPropriedade.name().equals(InfoPropriedade.TEMPO.name())) {
+							mapBom.put(infoPropriedade.name(), String.valueOf(novoTempo > analiseURL.min ? (long) novoTempo: analiseURL.min));
 						} else {
-							mapBom.put(formato.getInfoPropriedade().name(),
-									mapRuim.get(formato.getInfoPropriedade().name()));
+							mapBom.put(infoPropriedade.name(), mapRuim.get(infoPropriedade.name()));
 						}
-
-						data.add(mapBom.get(formato.getInfoPropriedade().name()));
+						
+						data.add(mapBom.get(infoPropriedade.name()));
 					}
 
 					novos.add(mapBom);

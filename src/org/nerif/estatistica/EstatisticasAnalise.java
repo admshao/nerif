@@ -1,26 +1,34 @@
 package org.nerif.estatistica;
 
 import java.util.HashMap;
+import java.util.HashSet;
+
+import org.nerif.ml.AnaliseURL;
 
 public class EstatisticasAnalise {
-	private HashMap<String, Long> urlQuantidadeEstatistica = new HashMap<>();
-	private HashMap<String, Long> urlDuracaoEstatistica = new HashMap<>();
-	private HashMap<String, Long> urlMinEstatistica = new HashMap<>();
-	private HashMap<String, Long> urlMaxEstatistica = new HashMap<>();
+	private HashMap<String, AnaliseURL> urlAnalise = new HashMap<>();
+	private HashMap<String, Long> portaQuantidade = new HashMap<>();
+	private HashMap<String, Long> extensaoQuantidade = new HashMap<>();
+	private HashMap<String, Long> urlProblematicaQuantidade = new HashMap<>();
+	private HashMap<String, HashSet<String>> urlStatusRuim = new HashMap<>();
 
-	public HashMap<String, Long> getUrlQuantidadeEstatistica() {
-		return urlQuantidadeEstatistica;
+	public HashMap<String, HashSet<String>> getUrlStatusRuim() {
+		return urlStatusRuim;
 	}
 
-	public HashMap<String, Long> getUrlDuracaoEstatistica() {
-		return urlDuracaoEstatistica;
+	public HashMap<String, Long> getUrlProblematicaQuantidade() {
+		return urlProblematicaQuantidade;
 	}
 
-	public HashMap<String, Long> getUrlMinEstatistica() {
-		return urlMinEstatistica;
+	public HashMap<String, AnaliseURL> getUrlAnalise() {
+		return urlAnalise;
 	}
 
-	public HashMap<String, Long> getUrlMaxEstatistica() {
-		return urlMaxEstatistica;
+	public HashMap<String, Long> getPortaQuantidade() {
+		return portaQuantidade;
+	}
+
+	public HashMap<String, Long> getExtensaoQuantidade() {
+		return extensaoQuantidade;
 	}
 }

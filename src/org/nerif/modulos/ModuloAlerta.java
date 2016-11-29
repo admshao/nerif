@@ -4,10 +4,14 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
@@ -16,8 +20,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.nerif.estatistica.EstatisticaArquivo;
+import org.nerif.estatistica.EstatisticasAnalise;
+import org.nerif.ml.AnaliseURL;
 import org.nerif.model.Alerta;
+import org.nerif.model.FormatoLog;
 import org.nerif.model.Indicador;
+import org.nerif.model.InfoPropriedade;
 import org.nerif.model.Usuario;
 import org.nerif.util.Config;
 import org.nerif.util.Email;
@@ -134,22 +142,22 @@ public class ModuloAlerta {
 
 		StringBuffer sb = new StringBuffer();
 
-		final EstatisticaArquivo estatisticas = ModuloEstatistico.getInstance().getEstatisticasURL();
-		final HashMap<String, Long> urlQuantidade = estatisticas.getEstatisticasAnalise().getUrlQuantidadeEstatistica();
-		final HashMap<String, Long> urlDuracao = estatisticas.getEstatisticasAnalise().getUrlDuracaoEstatistica();
+		final EstatisticasAnalise estatisticas = ModuloEstatistico.getInstance().getEstatisticasURL()
+				.getEstatisticasAnalise();
+		final HashMap<String, AnaliseURL> analiseURLMap = estatisticas.getUrlAnalise();
 
-		if (!urlQuantidade.isEmpty()) {
-			String urlMax = urlQuantidade.keySet().parallelStream()
-					.max((entry1, entry2) -> urlQuantidade.get(entry1) > urlQuantidade.get(entry2) ? 1 : -1).get();
+		if (!analiseURLMap.isEmpty()) {
+			String urlMax = analiseURLMap.keySet().parallelStream().max((entry1,
+					entry2) -> analiseURLMap.get(entry1).quantidade > analiseURLMap.get(entry2).quantidade ? 1 : -1)
+					.get();
 
-			long totalUrlRequest = urlQuantidade.get(urlMax);
-			sb.append("Url \"" + urlMax + "\" foi executada " + totalUrlRequest + " vezes.\n");
-			if (urlDuracao.containsKey(urlMax)) {
-				double urlTempoMedio = urlDuracao.get(urlMax) / totalUrlRequest;
-				sb.append("Com tempo de resposta medio de -> " + urlTempoMedio + "ms\n");
-			}
+			AnaliseURL analiseURL = analiseURLMap.get(urlMax);
+			sb.append("Url \"" + urlMax + "\" foi executada " + analiseURL.quantidade + " vezes.\n");
+			double urlTempoMedio = analiseURL.duracao / analiseURL.quantidade;
+			sb.append("Com tempo de resposta medio de -> " + urlTempoMedio + "ms\n");
 
-			long totalRequest = urlQuantidade.values().parallelStream().reduce(0l, (a, b) -> a + b);
+			long totalRequest = analiseURLMap.values().parallelStream().map(analise -> analise.quantidade).reduce(0l,
+					(a, b) -> a + b);
 			sb.append("Numero total de requisicoes realizadas -> " + totalRequest + "\n");
 		}
 
@@ -157,8 +165,111 @@ public class ModuloAlerta {
 			sb.append("Indicador -> " + indicador.getDescricao() + " foi ativado #: " + alerta.ativacoes + " vezes.\n");
 		});
 
+		int total = 5;
+		List<Entry<String, Long>> listUrlProblematicas = estatisticas.getUrlProblematicaQuantidade().entrySet().stream()
+				.sorted(Map.Entry.comparingByValue(new Comparator<Long>() {
+					@Override
+					public int compare(Long o1, Long o2) {
+						return (int) (o2 - o1);
+					}
+				})).collect(Collectors.toList());
+
+		for (int i = 0; i != listUrlProblematicas.size() && --total >= 0; i++) {
+			Entry<String, Long> e = listUrlProblematicas.get(i);
+			sb.append(e.getKey() + " -> " + e.getValue() + "\n");
+		}
+
+		for (FormatoLog formatoLog : Config.colunasLog) {
+			if (formatoLog.getInfoPropriedade().name().equals(InfoPropriedade.PORTA.name())) {
+				final HashMap<String, Long> portaQuantidade = estatisticas.getPortaQuantidade();
+				long totalPortas = estatisticas.getPortaQuantidade().values().stream().reduce(0l, (a, b) -> a + b);
+
+				portaQuantidade.forEach((k, v) -> {
+					double percent = (v * 100.0) / totalPortas;
+					if (percent >= 95) {
+						sb.append(percent + "% das requisicoes sao para a porta " + k
+								+ ". Considerar adicionar um idicador. Ex (Porta DIFERENTE de " + k + ")\n");
+					}
+
+				});
+			} else if (formatoLog.getInfoPropriedade().name().equals(InfoPropriedade.PROTOCOL_STATUS.name())) {
+				final HashMap<String, HashSet<String>> urlStatusRuim = estatisticas.getUrlStatusRuim();
+
+				urlStatusRuim.forEach((k, v) -> {
+					sb.append("As seguintes urls tiveram o status da requisicao com codigo pertencente a classe " + k
+							+ "00\n");
+					v.forEach(url -> {
+						sb.append("\t" + url + "\n");
+					});
+				});
+			} else if (formatoLog.getInfoPropriedade().name().equals(InfoPropriedade.TAMANHO.name())) {
+				long tamanhoTotal = analiseURLMap.values().parallelStream().map(analise -> analise.tamanho).reduce(0l,
+						(a, b) -> a + b);
+				if (tamanhoTotal > 0) {
+					int subTotal = 5;
+					List<Entry<String, AnaliseURL>> listURLPesadas = analiseURLMap.entrySet().stream()
+							.sorted(Map.Entry.comparingByValue(new Comparator<AnaliseURL>() {
+								@Override
+								public int compare(AnaliseURL o1, AnaliseURL o2) {
+									return (int) (o2.tamanho - o1.tamanho);
+								}
+							})).collect(Collectors.toList());
+
+					sb.append("URLs com grande potencial de impacto no sistema: (Avaliar necessidade de todos os dados trafegados pelas requisicao)\n");
+					for (int i = 0; i != listURLPesadas.size() && --subTotal >= 0; i++) {
+						Entry<String, AnaliseURL> e = listURLPesadas.get(i);
+						sb.append("\t" + e.getKey() + " trafegou com tamanho medio de " + e.getValue().tamanho + " bytes\n");
+					}
+				}
+			} else if (formatoLog.getInfoPropriedade().name().equals(InfoPropriedade.TEMPO.name())) {
+				int subTotal = 5;
+
+				final HashMap<String, Long> urlProblematicas = estatisticas.getUrlProblematicaQuantidade();
+				final HashMap<String, AnaliseURL> analiseURL = estatisticas.getUrlAnalise();
+				final HashMap<String, Double> urlProblematicaComPesoMap = new HashMap<>();
+				urlProblematicas.entrySet().stream().forEach(entry -> {
+					AnaliseURL analise = analiseURL.get(entry.getKey());
+					double valor = ((analise.max - analise.min) + (analise.max - (analise.duracao / analise.quantidade))) * analise.quantidade;
+					urlProblematicaComPesoMap.put(entry.getKey(), valor);
+				});
+
+				List<Entry<String, Double>> listURLProblematicas = urlProblematicaComPesoMap.entrySet().stream()
+						.sorted(Map.Entry.comparingByValue(Collections.reverseOrder())).collect(Collectors.toList());
+
+				sb.append("As seguintes URLs foram consideradas como potenciais gargalos da aplicacao:\n");
+				for (int i = 0; i != listURLProblematicas.size() && --subTotal >= 0; i++) {
+					Entry<String, Double> e = listURLProblematicas.get(i);
+					AnaliseURL analise = analiseURL.get(e.getKey());
+					sb.append("\t" + e.getKey() + " executada " + analise.quantidade + " vezes com tempo medio de: " + (analise.duracao / analise.quantidade) + "ms\n");
+				}
+
+			} else if (formatoLog.getInfoPropriedade().name().equals(InfoPropriedade.URL.name())) {
+				int subTotal = 5;
+				List<Entry<String, Long>> listExtensaoPopulares = estatisticas.getExtensaoQuantidade().entrySet()
+						.stream().sorted(Map.Entry.comparingByValue(new Comparator<Long>() {
+							@Override
+							public int compare(Long o1, Long o2) {
+								return (int) (o2 - o1);
+							}
+						})).collect(Collectors.toList());
+
+				for (int i = 0; i != listExtensaoPopulares.size() && --subTotal >= 0; i++) {
+					Entry<String, Long> e = listExtensaoPopulares.get(i);
+
+					if (Config.EXTENSAO_IMAGENS.contains(e.getKey())) {
+						sb.append("Existem " + e.getValue() + " arquivos com a extensao " + e.getKey()
+								+ ". Considerar comprimir as imagens em um unico arquivo.\n");
+					} else if (Config.EXTENSAO_MINIMIFICAVEIS.contains(e.getKey())) {
+						sb.append("Existem " + e.getValue() + " arquivos com a extensao " + e.getKey()
+								+ ". Considerar minimificacao para um unico arquivo.\n");
+					}
+
+				}
+			}
+		}
+
 		System.out.println(sb.toString());
-		
+
 		if (Config.EXECUTA_MODULO_ANALISE) {
 			ModuloAnalise.getInstance().gerarRelatorio(estatisticas);
 		}

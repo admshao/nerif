@@ -21,10 +21,10 @@ import org.nerif.gson.Gson;
 import org.nerif.gson.JsonArray;
 import org.nerif.gson.JsonElement;
 import org.nerif.gson.JsonObject;
+import org.nerif.ml.ConjuntoTreinamentoArvore;
 import org.nerif.model.ConcurrentDateFormat;
 import org.nerif.model.ConcurrentDateTimeFormat;
 import org.nerif.model.ConcurrentTimeFormat;
-import org.nerif.model.ConjuntoTreinamentoArvore;
 import org.nerif.model.FormatoLog;
 import org.nerif.model.Grupo;
 import org.nerif.model.Indicador;
@@ -84,9 +84,28 @@ public class Config {
 	public static String PATH_BASE_STRING;
 	public static URI URI_CONFIG;
 	public static URI URI_TRAINING;
+	public static URI URI_INTEGRACAO;
 	public static String PATH_STATISTICS;
 	
-	public static final long MIN_INTERVALO_RELATORIO = 15;
+	public static final HashSet<InfoPropriedade> colunasParaArvore = new HashSet<InfoPropriedade>() {{
+		add(InfoPropriedade.URL); add(InfoPropriedade.TEMPO);
+	}};
+	
+	public static final int ULTIMAS_N_LINHAS = 30;
+	public static final List<String> EXTENSAO_IMAGENS = new ArrayList<String>(){
+		private static final long serialVersionUID = -6768575329235576899L;
+
+	{
+		add("jpg");add("png");
+	}};
+	public static final List<String> EXTENSAO_MINIMIFICAVEIS = new ArrayList<String>(){
+		private static final long serialVersionUID = -4206550125176069944L;
+
+	{
+		add("js");add("css");
+	}};
+	
+	public static final long MIN_INTERVALO_RELATORIO = 1;
 	public static final long INTERVALO_RELATORIO_GERAL = 24 * 60;
 
 	public static ConjuntoTreinamentoArvore conjuntoTreinamento = new ConjuntoTreinamentoArvore();
@@ -134,6 +153,7 @@ public class Config {
 		
 		URI_CONFIG = new URL(PATH_BASE_STRING + "config/config.json").toURI();
 		URI_TRAINING = new URL(PATH_BASE_STRING + "config/training.json").toURI();
+		URI_INTEGRACAO = new URL(PATH_BASE_STRING + "config/integracao.json").toURI();
 		PATH_STATISTICS = PATH_BASE_STRING + "statistics/";
 		
 		String configString = new String(Files.readAllBytes(Paths.get(URI_CONFIG)), CHARSET);
@@ -152,19 +172,24 @@ public class Config {
 		long msExecucao = hora * 60 * 60 * 1000 + minuto * 60 * 1000;
 		horaRelatorioGeral = msExecucao - msAgora + (msAgora > msExecucao ? 24 * 60 * 60 * 1000 : 0);
 
-		if (EMAIL_ALERT) {
-			String[] emailSplit = cfgFileObj.get("email").getAsString().split(";");
-			EMAIL_USERNAME = emailSplit[0];
-			EMAIL_PASSWORD = emailSplit[1];
-			Email.getInstance();
-		}
-
-		if (SMS_ALERT) {
-			String[] smsSplit = cfgFileObj.get("sms").getAsString().split(";");
-			SMS_ACCOUNT_SID = smsSplit[0];
-			SMS_AUTH_TOKEN = smsSplit[1];
-			SMS_PHONE_NUMBER = smsSplit[2];
-			SMS.getInstance();
+		if (EMAIL_ALERT || SMS_ALERT) {
+			JsonElement cfgIntegracaoFileElement = GSON.fromJson(new String(Files.readAllBytes(Paths.get(URI_INTEGRACAO)), CHARSET), JsonElement.class);
+			JsonObject integracaoFileObj = cfgIntegracaoFileElement.getAsJsonObject();
+			
+			if (EMAIL_ALERT) {
+				String[] emailSplit = integracaoFileObj.get("email").getAsString().split(";");
+				EMAIL_USERNAME = emailSplit[0];
+				EMAIL_PASSWORD = emailSplit[1];
+				Email.getInstance();
+			}
+			
+			if (SMS_ALERT) {
+				String[] smsSplit = integracaoFileObj.get("sms").getAsString().split(";");
+				SMS_ACCOUNT_SID = smsSplit[0];
+				SMS_AUTH_TOKEN = smsSplit[1];
+				SMS_PHONE_NUMBER = smsSplit[2];
+				SMS.getInstance();
+			}
 		}
 
 		JsonArray logPropertiesArray = cfgFileObj.get("logProperties").getAsJsonArray();
@@ -197,8 +222,10 @@ public class Config {
 			List<Regra> regras = new ArrayList<Regra>();
 			while (regraIterator.hasNext()) {
 				JsonObject regraObj = regraIterator.next().getAsJsonObject();
+				InfoPropriedade infoPropriedade = InfoPropriedade.valueOf(regraObj.get("infoPropriedade").getAsString());
+				colunasParaArvore.add(infoPropriedade);
 				Regra regra = new Regra(regraObj.get("descPropriedade").getAsString(),
-						InfoPropriedade.valueOf(regraObj.get("infoPropriedade").getAsString()),
+						infoPropriedade,
 						TipoComparacao.valueOf(regraObj.get("tipoComparacao").getAsString()),
 						TipoValor.valueOf(regraObj.get("tipoValor").getAsString()),
 						regraObj.get("valor1").getAsString(),

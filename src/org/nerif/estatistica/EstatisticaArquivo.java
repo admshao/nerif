@@ -1,8 +1,11 @@
 package org.nerif.estatistica;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
+import org.nerif.ml.AnaliseURL;
 import org.nerif.model.InfoPropriedade;
+import org.nerif.util.Config;
 
 public class EstatisticaArquivo {
 
@@ -15,6 +18,64 @@ public class EstatisticaArquivo {
 
 	public HashMap<String, EstatisticaDia> getEstatisticasDia() {
 		return estatisticasDia;
+	}
+
+	public void processaLinhaAnalise(final HashMap<String, String> coluns) {
+		final String url = coluns.get(InfoPropriedade.URL.name());
+		final String tempo = coluns.get(InfoPropriedade.TEMPO.name());
+		final String tamanho = coluns.get(InfoPropriedade.TAMANHO.name());
+		final String porta = coluns.get(InfoPropriedade.PORTA.name());
+		final String protocolStatus = coluns.get(InfoPropriedade.PROTOCOL_STATUS.name());
+
+		if (url != null) {
+			AnaliseURL analiseURL = estatisticasAnalise.getUrlAnalise().get(url);
+			if (analiseURL == null) {
+				analiseURL = new AnaliseURL();
+				estatisticasAnalise.getUrlAnalise().put(url, analiseURL);
+			}
+			analiseURL.quantidade++;
+			
+			int ultimaBarra = url.lastIndexOf("/");
+			int ultimoPonto = url.lastIndexOf(".");
+			if (ultimoPonto > ultimaBarra) {
+				estatisticasAnalise.getExtensaoQuantidade().compute(url.substring(ultimoPonto + 1),
+						(k, v) -> v == null ? 1l : v + 1);
+			}
+
+			if (tempo != null) {
+				Long tempoL = Long.valueOf(tempo);
+				analiseURL.duracao += tempoL;
+				analiseURL.min = analiseURL.min < tempoL ? analiseURL.min : tempoL;
+				analiseURL.max = analiseURL.max > tempoL ? analiseURL.max : tempoL;
+			}
+
+			if (tamanho != null) {
+				Long tamanhoL = Long.valueOf(tamanho);
+				analiseURL.tamanho += tamanhoL;
+			}
+
+			if (porta != null) {
+				estatisticasAnalise.getPortaQuantidade().compute(porta, (k, v) -> v == null ? 1l : v + 1);
+			}
+			
+			if (protocolStatus != null) {
+				if (protocolStatus.startsWith("4")) {
+					HashSet<String> statusRuins = estatisticasAnalise.getUrlStatusRuim().get("4");
+					if (statusRuins == null) {
+						statusRuins = new HashSet<>();
+						estatisticasAnalise.getUrlStatusRuim().put("4", statusRuins);
+					}
+					statusRuins.add(url);
+				} else if (protocolStatus.startsWith("5")) {
+					HashSet<String> statusRuins = estatisticasAnalise.getUrlStatusRuim().get("5");
+					if (statusRuins == null) {
+						statusRuins = new HashSet<>();
+						estatisticasAnalise.getUrlStatusRuim().put("5", statusRuins);
+					}
+					statusRuins.add(url);
+				}
+			}
+		}
 	}
 
 	public void processaLinha(final HashMap<String, String> coluns) {
@@ -58,11 +119,6 @@ public class EstatisticaArquivo {
 						estatisticaURL.tempoMin = tempoL;
 					}
 
-					estatisticasAnalise.getUrlQuantidadeEstatistica().compute(url, (k, v) -> v == null ? 1l : v + 1);
-					estatisticasAnalise.getUrlDuracaoEstatistica().compute(url, (k, v) -> v == null ? tempoL : v + tempoL);
-					estatisticasAnalise.getUrlMinEstatistica().compute(url, (k, v) -> v == null || tempoL < v ? tempoL : v);
-					estatisticasAnalise.getUrlMaxEstatistica().compute(url, (k, v) -> v == null || tempoL > v ? tempoL : v);
-
 					if (hora != null) {
 						EstatisticaHora estatisticaHora = estatisticaURL.horarios.get(hora);
 						if (estatisticaHora == null) {
@@ -88,6 +144,10 @@ public class EstatisticaArquivo {
 						estatisticaHora.linhas.add(linhaGeral);
 					}
 				}
+			}
+
+			if (Config.EXECUTA_MODULO_ANALISE) {
+				processaLinhaAnalise(coluns);
 			}
 		}
 	}

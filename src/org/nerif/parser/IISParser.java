@@ -32,14 +32,18 @@ public class IISParser {
 
 	private HashMap<String, HashMap<Integer, InfoPropriedade>> arquivosIndices = new HashMap<>();
 	private HashMap<String, Long> arquivosParaAnalise = new HashMap<>();
+	private boolean esperaArquivosExistentes = false;
 
 	public void run() throws Exception {
 		analisaArquivosExistentes();
+		if (!esperaArquivosExistentes)
+			analisaArquivos();
 	}
 
 	private void analisaArquivosExistentes() throws Exception {
 		Files.walk(Paths.get(Config.caminhoLog)).parallel().filter(file -> file.toFile().getName().endsWith(".log"))
 				.forEach(f -> {
+					esperaArquivosExistentes = true;
 					Config.activeThreads++;
 					Config.THREAD_POOL_EXECUTOR.submit(new ArquivoExistenteSimples(f.toFile()));
 				});
@@ -47,16 +51,17 @@ public class IISParser {
 		if (Config.EXECUTA_MODULO_ESTATISTICO) {
 			Files.walk(Paths.get(Config.caminhoLog)).parallel().filter(file -> file.toFile().getName().endsWith(".log"))
 					.forEach(f -> {
+						esperaArquivosExistentes = true;
 						Config.activeThreads++;
 						Config.THREAD_POOL_EXECUTOR.submit(new ArquivoExistenteEstatistico(f.toFile()));
 					});
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void analisaArquivos() {
+		
 		try {
-			System.out.println("vai");
-
 			WatchService watcher = FileSystems.getDefault().newWatchService();
 			Path dir = Paths.get(Config.caminhoLog);
 
@@ -81,6 +86,8 @@ public class IISParser {
 						if (tamanhoAntigo == null) {
 							tamanhoAntigo = 0l;
 						}
+						if (valorAtual == tamanhoAntigo)
+							continue;
 						RandomAccessFile raf = new RandomAccessFile(file, "r");
 						raf.seek(tamanhoAntigo);
 						int tamanhoFinal = (int) (valorAtual - tamanhoAntigo);
@@ -113,10 +120,9 @@ public class IISParser {
 									translateMap.forEach((k, v) -> {
 										coluns.put(v.getInfoPropriedade(), splitFields[k]);
 									});
-									System.out.println(coluns);
-									//moduloSimples.processaLinha(coluns);
+									moduloSimples.processaLinha(coluns);
 									arquivosParaAnalise.put(file.getName(), (Long) map.get(Config.ARQUIVO_SIZE));
-									//ModuloEstatistico.getInstance().getEstatisticasHistoricas().
+									ModuloEstatistico.getInstance().processaLinha(coluns);
 								} catch (Exception e) {
 								}
 							}
@@ -133,9 +139,6 @@ public class IISParser {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		Config.THREAD_POOL_EXECUTOR.shutdown();
-		Config.TIMER.cancel();
 	}
 
 	public class ArquivoExistenteSimples implements Runnable {

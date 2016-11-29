@@ -109,7 +109,7 @@ Ext.define('Nerif.view.tab.Teste', {
 					handler: function() {
 						var dir = dialog.showOpenDialog({properties: ['openDirectory']});
 						if(dir)
-							logDirectoryText.setValue(dir);
+							diretorioField.setValue(dir);
 					}
 				}
 			}

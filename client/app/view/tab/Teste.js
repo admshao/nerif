@@ -27,8 +27,6 @@ Ext.define('Nerif.view.tab.Teste', {
     		fs.appendFile(fileHdn.getValue(), '\r\n' + linha, function (err) {
     			if(err) {
     				Ext.Msg.alert('Atenção', 'Ocorreu um erro ao adicionar o registro');
-    			} else {
-    				Ext.Msg.alert('OK', 'Registro adiconado');
     			}
     		});
     		

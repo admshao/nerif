@@ -51,7 +51,15 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			insetPadding: 40,
 				store: {
 					fields: ['horario', 'quantidade'],
-					data: data
+					data: data,
+					sorters: {				               
+						sorterFn: function(record1, record2) {
+							var data1 = Ext.Date.parse(record1.get('horario'), 'H:i'),
+								data2 = Ext.Date.parse(record2.get('horario'), 'H:i');
+
+							return data1 > data2 ? 1 : (data1 === data2) ? 0 : -1;
+						}
+					}
 				},
 				axes: [{
 					type: 'numeric',
@@ -224,7 +232,7 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			var horarios = dados.requisicoes[key].horarios;
     			
     			for(var horario in horarios) {    				
-    				var dt = Ext.Date.format(Ext.Date.parse(horarios[horario], 'H:i:s'), 'G');
+    				var dt = Ext.Date.format(Ext.Date.parse(horario, 'H:i:s'), 'G');
     				    				
     				var tamanho = Ext.Array.sum(Ext.Array.pluck(horarios[horario].linhas, 'tamanho'));
     				
@@ -251,7 +259,15 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			insetPadding: 40,
 				store: {
 					fields: ['horario', 'totalBytes'],
-					data: data
+					data: data,
+					sorters: {				               
+						sorterFn: function(record1, record2) {
+							var data1 = Ext.Date.parse(record1.get('horario'), 'H:i'),
+								data2 = Ext.Date.parse(record2.get('horario'), 'H:i');
+
+							return data1 > data2 ? 1 : (data1 === data2) ? 0 : -1;
+						}
+					}
 				},
 				axes: [{
 					type: 'numeric',
@@ -287,7 +303,7 @@ Ext.define('Nerif.view.tab.Estatistica', {
     	var tempoPorUrlPorHora = function(dados, filtro) {
     		
     		var data = [];
-    		
+    		    		
     		for(var key in dados.requisicoes) {
     			if(filtro && key.indexOf(filtro) === -1)
     				continue;
@@ -308,7 +324,9 @@ Ext.define('Nerif.view.tab.Estatistica', {
     					tempoMedio: tempoMedio
     				});
     				
-    			}    			
+    			}
+    			
+    			break;
     		}
     		
     		centerPanel.add({    			
@@ -316,7 +334,15 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			insetPadding: 40,
 				store: {
 					fields: ['url', 'horario', 'tempoMin', 'tempoMax', 'tempoMedio'],
-					data: data
+					data: data,
+					sorters: {				               
+						sorterFn: function(record1, record2) {
+							var data1 = Ext.Date.parse(record1.get('horario'), 'H:i:s'),
+								data2 = Ext.Date.parse(record2.get('horario'), 'H:i:s');
+
+							return data1 > data2 ? 1 : (data1 === data2) ? 0 : -1;
+						}
+					}
 				},
 				axes: [{
 					type: 'numeric',
@@ -366,6 +392,76 @@ Ext.define('Nerif.view.tab.Estatistica', {
     		
     	};
     	
+    	var totalPorta = function(dados, filtro) {
+    		
+    		var reqPorta = {};
+    		
+    		for(var key in dados.requisicoes) {
+    			var horarios = dados.requisicoes[key].horarios;
+    			for(var horario in horarios) {
+    				var portas = Ext.Array.pluck(horarios[horario].linhas, 'porta');
+    			
+    				for(var i = 0; i < portas.length; i++) {
+    					var porta = portas[i];
+    					
+    					if(filtro && porta.indexOf(filtro) === -1)
+    						continue;
+    					
+    					if(!reqPorta[porta]) {
+    						reqPorta[porta] = 1;
+        				} else {
+        					reqPorta[porta]++;
+        				}    					
+    				}    				
+    			}    			
+    		}    		
+
+    		var data = [];
+    		for(var key in reqPorta) {
+    			data.push({
+    				porta: key,
+    				quantidade: reqPorta[key]
+    			})
+    		}
+    		
+    		centerPanel.add({    			
+    			xtype: 'cartesian',
+    			insetPadding: 40,
+				store: {
+					fields: ['porta', 'quantidade'],
+					data: data
+				},
+				axes: [{
+					type: 'numeric',
+					position: 'left',
+					fields: ['quantidade'],
+					grid: true,
+					minimum: 0
+				}, {
+					type: 'category',
+					position: 'bottom',
+					fields: ['porta']
+				}],
+				series: [{
+					type: 'bar',
+					xField: 'porta',
+					yField: 'quantidade',
+					subStyle: {
+						fill: ['#5fa2dd'],
+						stroke: '#5fa2dd'
+					},
+					tooltip: {
+						trackMouse: true,
+						width: 200,
+						renderer: function (toolTip, record, ctx) {
+							toolTip.setHtml(record.get('porta') + ': ' + record.get('quantidade') + ' requisição(ões)');
+						}
+					}
+				}]
+    		});
+    		
+    	};
+    	
     	var gerarGrafico = function() {
     		var data = datasComEstatisticaCombo.getValue();
     		var opcao = opcoesCombo.getValue();
@@ -378,9 +474,14 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			centerPanel.update('<center><div><strong>Selecione uma data e uma opção<strong></div></center>');
     		} else {
     			
-    			if (statisticData) {    					
-					eval(opcao)(statisticData, filtro);  								
-    					
+    			if (statisticData) {
+    				
+    				Ext.getBody().mask('Gerando gráfico...');    	
+    				setTimeout(function() {
+						eval(opcao)(statisticData, filtro);  								
+						Ext.getBody().unmask();
+	    			}, 10);
+					
         		} else {
         			centerPanel.update('<center><div><strong>Não existem dados para a data escolhida<strong></div></center>');	
         		}    			
@@ -408,7 +509,9 @@ Ext.define('Nerif.view.tab.Estatistica', {
     		queryMode: 'local',
     		allowBlank: false,
     		listeners: {
-    			'change': function(me, value) {
+    			'select': function(me) {
+    				var value = me.getValue();
+    				
     				if(!value) {
     					lastModifiedTime = null;
     					statisticData = null;
@@ -424,8 +527,12 @@ Ext.define('Nerif.view.tab.Estatistica', {
 	    					
 	    					lastModifiedTime = stat.mtime;
 	    					
+	    					Ext.getBody().mask('Carregando');
+	    					
 	    					fs.readFile(path, "utf8", function (err, dados) {
 	    						statisticData = Ext.decode(dados);
+	    						
+	    						Ext.getBody().unmask();
 	    					});	    					
 	    				}
     				}
@@ -440,7 +547,8 @@ Ext.define('Nerif.view.tab.Estatistica', {
     	        { "valor": "totalExtensoes", "descricao": "Total de requisições por extensão de arquivo" },
     	        { "valor": "totalIP", "descricao": "Total de requisições por IP" },
     	        { "valor": "totalBytesHora", "descricao": "Total de bytes por hora" },
-    	        { "valor": "tempoPorUrlPorHora", "descricao": "Tempo médio de requisições por URL por hora" }    	        
+    	        { "valor": "tempoPorUrlPorHora", "descricao": "Tempo médio de requisições por URL por hora" },
+    	        { "valor": "totalPorta", "descricao": "Tempo de requisições por porta" }
     	    ]
     	});
 
@@ -476,6 +584,9 @@ Ext.define('Nerif.view.tab.Estatistica', {
     					break;
     				case 'totalIP':
     					filtroText.setFieldLabel('IP');
+    					break;
+    				case 'totalPorta':
+    					filtroText.setFieldLabel('Porta');
     					break;
 					default:
 						filtroText.setFieldLabel('Teste');
@@ -530,13 +641,16 @@ Ext.define('Nerif.view.tab.Estatistica', {
     			fs.readdir('./statistics/', (err, files) => {
     				var datas = [];
     				files.forEach(file => {
-    					var dataStr = path.basename(file, path.extname(file));
-    					var data = Ext.Date.parse(dataStr, 'Y-m-d');
-    					
-    					datas.push({ 
-    						data: data,
-    						dataFormatada: Ext.Date.format(data, 'd/m/Y')
-						});
+    					var extension = path.extname(file);
+    					if(extension === '.json') {
+	    					var dataStr = path.basename(file, extension);
+	    					var data = Ext.Date.parse(dataStr, 'Y-m-d');
+	    					
+	    					datas.push({ 
+	    						data: data,
+	    						dataFormatada: Ext.Date.format(data, 'd/m/Y')
+							});
+    					}
     				});
     				
     				datasComEstatisticaStore.loadData(datas);

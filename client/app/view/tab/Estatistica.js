@@ -529,11 +529,14 @@ Ext.define('Nerif.view.tab.Estatistica', {
 	    					
 	    					Ext.getBody().mask('Carregando');
 	    					
-	    					fs.readFile(path, "utf8", function (err, dados) {
-	    						statisticData = Ext.decode(dados);
+	    					setTimeout(function() {
+	    						
+	    						var dados = fs.readFileSync(path, 'utf8');
+	    						statisticData = JSON.parse(dados);
 	    						
 	    						Ext.getBody().unmask();
-	    					});	    					
+	    						
+	    					}, 10);					
 	    				}
     				}
     			}
@@ -548,7 +551,7 @@ Ext.define('Nerif.view.tab.Estatistica', {
     	        { "valor": "totalIP", "descricao": "Total de requisições por IP" },
     	        { "valor": "totalBytesHora", "descricao": "Total de bytes por hora" },
     	        { "valor": "tempoPorUrlPorHora", "descricao": "Tempo médio de requisições por URL por hora" },
-    	        { "valor": "totalPorta", "descricao": "Tempo de requisições por porta" }
+    	        { "valor": "totalPorta", "descricao": "Total de requisições por porta" }
     	    ]
     	});
 
